@@ -1,14 +1,6 @@
 #' @importFrom Rcpp evalCpp
-#' @importFrom data.table tstrsplit ":=" data.table setDF
-#' @importFrom utils download.file
+#' @importFrom data.table tstrsplit ":=" data.table as.data.table setDF setDT setnames rbindlist setorder is.data.table frankv
+#' @importFrom utils download.file head
+#' @importFrom Matrix sparseMatrix summary crossprod tcrossprod diag 
 #' @useDynLib udpipe
 NULL
-
-udpipe_env <- new.env()
-
-.onLoad <- function(libname, pkgname){
-  udpipe_env$log <- Sys.getenv("UDPIPE_PROCESS_LOG")
-}
-.onAttach <- function(libname, pkgname){
-  udpipe_env$log <- Sys.getenv("UDPIPE_PROCESS_LOG")
-}

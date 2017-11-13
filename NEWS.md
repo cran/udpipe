@@ -1,3 +1,35 @@
+# CHANGES IN udpipe VERSION 0.2
+
+- Added data preparation elements for standard text mining flows namely: 
+    cooccurrence
+    collocation
+    document_term_frequencies
+    document_term_matrix
+    dtm_tfidf
+    dtm_remove_terms
+    dtm_remove_lowfreq
+    dtm_remove_tfidf
+    dtm_reverse
+    dtm_cor
+    txt_collapse
+    txt_sample
+    txt_show
+    txt_highlight
+    txt_recode
+    txt_previous
+    txt_next
+    txt_nextgram
+    unique_identifier
+- Added predict.LDA_VEM and predict.LDA_Gibbs
+- Renamed dataset annotation_params to udpipe_annotation_params
+- Added example datasets called brussels_listings, brussels_reviews, brussels_reviews_anno
+- Use path.expand on conll-u files which are used for training
+- udpipe_download_model now downloads from https://raw.githubusercontent.com/jwijffels/udpipe.models.ud.2.0/master instead of https://github.com/jwijffels/udpipe.models.ud.2.0/raw/master
+
+# CHANGES IN udpipe VERSION 0.1.2
+
+- Remove logic of UDPIPE_PROCESS_LOG (using Rcpp::Rout instead). This fixes issue detected with valgrind about ofstream
+
 # CHANGES IN udpipe VERSION 0.1.1
 
 - Fix issue on Solaris builds at CRAN, namely: error: expected primary-expression before ‘enum’
