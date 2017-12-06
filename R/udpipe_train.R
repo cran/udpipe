@@ -132,3 +132,4 @@ udpipe_train <- function(file = file.path(getwd(), "my_annotator.udpipe"),
          errors = result$errors,
     class = "udpipe_trained_model"))
 }
+
