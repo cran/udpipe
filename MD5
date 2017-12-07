@@ -1,6 +1,6 @@
-07bac3b4080784483ff91421bc478973 *DESCRIPTION
+6fa44506e6557836c6920e74bf9e9811 *DESCRIPTION
 4b55513ffdac3ee13bdbb143c59d13fd *NAMESPACE
-4cdd3471f8016e0ea118b7850ab99529 *NEWS.md
+25e0288703e9a30b0b6353484f3847e8 *NEWS.md
 f05d75bd96bb7e78f64553918de405fc *R/RcppExports.R
 7775e5dd62ea421256fcf345c481460d *R/datasets.R
 35f21517f325cd3c2ddf150396802375 *R/nlp_collocation.R
@@ -21,10 +21,10 @@ ce4c695686a76bee85b8f6269b64bf38 *data/brussels_reviews_anno.RData
 1b093c8923911d46f7c21182e35c5e8b *data/udpipe_annotation_params.RData
 ee15bbbc8cb13eb43a687d7b5d5abe90 *inst/doc/udpipe-annotation.R
 0af9509da710ba532f9ce3fe4477e9fc *inst/doc/udpipe-annotation.Rmd
-d1f4380e7de2788bd9dc660f3d6be79a *inst/doc/udpipe-annotation.html
+1f1dc626825d3f802cc7cc2d4046a741 *inst/doc/udpipe-annotation.html
 247fa3b7fd32fa5dbe578a89f14c7132 *inst/doc/udpipe-train.R
 63398e76181f494052bb7db0b7b37858 *inst/doc/udpipe-train.Rmd
-84623bf24d4b34718735ebfa6b5b2216 *inst/doc/udpipe-train.html
+27d3ad1cd72ca389c1b57c46dde55fd2 *inst/doc/udpipe-train.html
 f058e4bf7015b3132432684f5815a5b7 *inst/dummydata/toymodel.udpipe
 4059d4d7ebe37a05933bc8abf22fb133 *inst/dummydata/traindata.conllu
 2d58d64e6a7d49b67fa70b6e45b8cb05 *inst/models-ud-2.0/params_parser
@@ -66,7 +66,7 @@ b0622955a1a744c4fcf18b5b744bc5d9 *man/udpipe_annotation_params.Rd
 867ebe3aac023a43f357df3c9e329da3 *src/RcppExports.cpp
 77fa26ee952c19bc1b82e05c7fce3a01 *src/rcpp_phrases.cpp
 753e6602d0fa3c4ec410855debfe12ff *src/rcpp_udpipe.cpp
-ddeb29376582ca0e1144541e46be9573 *src/udpipe.cpp
+b7630849ee9d241bd9846f4cc744a24b *src/udpipe.cpp
 a23b0485eb7a0311c852fe7400a0709f *src/udpipe.h
 0af9509da710ba532f9ce3fe4477e9fc *vignettes/udpipe-annotation.Rmd
 17eba80ecafa96c7c95f0d6b1b991a5c *vignettes/udpipe-rlogo.png
