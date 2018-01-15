@@ -123,8 +123,31 @@ udpipe_annotate <- function(object, x, doc_id = paste("doc", seq_along(x), sep="
 #' ## cleanup for CRAN only - you probably want to keep your model if you have downloaded it
 #' file.remove("dutch-lassysmall-ud-2.0-170801.udpipe")
 as.data.frame.udpipe_connlu <- function(x, ...){
+  read_connlu(x, is_udpipe_annotation = TRUE)
+}
+
+
+read_connlu <- function(x, is_udpipe_annotation = FALSE){
   ## R CMD check happyness
   doc_id <- paragraph_id <- token_id <- head_token_id <- lemma <- upos <- xpos <- feats <- dep_rel <- deps <- misc <- NULL
+  ## Default output 
+  default <- data.frame(doc_id = character(), 
+                        paragraph_id = integer(), 
+                        sentence_id = character(), 
+                        sentence = character(), 
+                        token_id = character(), 
+                        token = character(), 
+                        lemma = character(), 
+                        upos = character(), 
+                        xpos = character(), 
+                        feats = character(), 
+                        head_token_id = character(), 
+                        dep_rel = character(), 
+                        deps = character(), 
+                        misc = character(), stringsAsFactors = FALSE)
+  if(is_udpipe_annotation){
+    default$sentence_id <- as.integer(default$sentence_id)
+  }
   ## Check if there is data in x$conllu
   if(length(x$conllu) <= 1){
     if(all(x$conllu == "")){
@@ -135,25 +158,19 @@ as.data.frame.udpipe_connlu <- function(x, ...){
         msg <- paste(msg, collapse = ", ")
       }
       warning(sprintf("No parsed data in x$conllu, returning default empty data.frame. Error message at x$error indicates e.g.: %s", msg))
-      default <- data.frame(doc_id = character(), 
-                            paragraph_id = integer(), 
-                            sentence_id = integer(), 
-                            sentence = character(), 
-                            token_id = character(), 
-                            token = character(), 
-                            lemma = character(), 
-                            upos = character(), 
-                            xpos = character(), 
-                            feats = character(), 
-                            head_token_id = character(), 
-                            dep_rel = character(), 
-                            deps = character(), 
-                            misc = character(), stringsAsFactors = FALSE)
+      
       return(default)
     }
   }
   
   ## Parse format of all lines in the CONLL-U format
+  if(!exists("startsWith", envir = baseenv())){
+    ## Function only from R version 3.3.0
+    startsWith <- function(x, prefix){
+      prefix <- paste("^", prefix, sep = "")
+      grepl(pattern = prefix, x = x)
+    }
+  }
   txt <- strsplit(x$conllu, "\n")[[1]]
   is_sentence_boundary <- txt == ""
   is_comment <- startsWith(txt, "#")
@@ -165,9 +182,12 @@ as.data.frame.udpipe_connlu <- function(x, ...){
   
   out <- data.table::data.table(txt = txt,
                     doc_id = na_locf(ifelse(is_newdoc, sub("^# newdoc id = *", "", txt), NA_character_)),
-                    sentence_id = as.integer(na_locf(ifelse(is_sentenceid, sub("^# sent_id = *", "", txt), NA_character_))),
+                    sentence_id = na_locf(ifelse(is_sentenceid, sub("^# sent_id = *", "", txt), NA_character_)),
                     sentence = na_locf(ifelse(is_sentencetext, sub("^# text = *", "", txt), NA_character_)),
                     is_newparagraph = is_newparagraph)
+  if(is_udpipe_annotation){
+    out$sentence_id <- as.integer(out$sentence_id)
+  }
   underscore_as_na <- function(x, which_na = NA_character_){
     x[which(x == "_")] <- which_na
     x
@@ -189,3 +209,5 @@ as.data.frame.udpipe_connlu <- function(x, ...){
   data.table::setDF(out)
   out
 }
+
+

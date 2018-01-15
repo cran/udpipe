@@ -1,3 +1,15 @@
+# CHANGES IN udpipe VERSION 0.3
+
+- Add docusaurus site
+- udpipe_download_model gains and extra argument called udpipe_model_repo to allow to download models mainly released under CC-BY-SA from https://github.com/bnosac/udpipe.models.ud
+- Add udpipe_accuracy 
+- Add dtm_rbind and dtm_cbind 
+- Add udpipe_read_conllu to simplify creating wordvectors 
+- Allow to provide several fields in document_term_frequencies to easily allow to include bigrams/trigrams/... for topic modelling purposes e.g. alongside the textrank package or alongside collocation
+- Adding Serbian + Afrikaans
+- Fixing UBSAN messages (misaligned addresses)
+- If user has R version < 3.3.0, use own startsWith function instead of base::startsWith
+ 
 # CHANGES IN udpipe VERSION 0.2.2
 
 - Another stab at fixing the Solaris compilation issue in  ufal::udpipe::multiword_splitter::append_token
