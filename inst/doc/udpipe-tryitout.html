@@ -11,7 +11,7 @@
 
 <meta name="author" content="Jan Wijffels" />
 
-<meta name="date" content="2018-01-15" />
+<meta name="date" content="2018-02-06" />
 
 <title>UDPipe Natural Language Processing - Try it out</title>
 
@@ -119,22 +119,34 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">UDPipe Natural Language Processing - Try it out</h1>
 <h4 class="author"><em>Jan Wijffels</em></h4>
-<h4 class="date"><em>2018-01-15</em></h4>
+<h4 class="date"><em>2018-02-06</em></h4>
 
 </div>
 
 
 <p>Install the R package.</p>
 <pre class="eval"><code>install.packages(&quot;udpipe&quot;)</code></pre>
+<div id="example" class="section level2">
+<h2>Example</h2>
 <p>Get your language model and start annotating.</p>
 <pre class="r"><code>library(udpipe)
-udmodel_dutch &lt;- udpipe_download_model(language = &quot;dutch&quot;)
-udmodel_dutch &lt;- udpipe_load_model(file = udmodel_dutch$file_model)
-x &lt;- udpipe_annotate(udmodel_dutch, 
+udmodel &lt;- udpipe_download_model(language = &quot;dutch&quot;)
+udmodel &lt;- udpipe_load_model(file = udmodel$file_model)
+x &lt;- udpipe_annotate(udmodel, 
                      x = &quot;Ik ging op reis en ik nam mee: mijn laptop, mijn zonnebril en goed humeur.&quot;)
 x &lt;- as.data.frame(x)</code></pre>
 <p>The annotation returns paragraphs, sentences, tokens, morphology elements like the lemma, the universal part of speech tag and the treebank-specific parts of speech tag, morphosyntactic features and returns as well the dependency relationship. More information at <a href="http://universaldependencies.org/guidelines.html" class="uri">http://universaldependencies.org/guidelines.html</a></p>
 <pre><code>str(x)</code></pre>
+</div>
+<div id="a-small-note-on-encodings" class="section level2">
+<h2>A small note on encodings</h2>
+<p>Mark that it is important that the <code>x</code> argument to <code>udpipe_annotate</code> is in UTF-8 encoding. You can check the encoding of your text with <code>Encoding('your text')</code>. You can convert your text to UTF-8, using standard R utilities: as in <code>iconv('your text', from = 'latin1', to = 'UTF-8')</code> where you replace the <code>from</code> part with whichever encoding you have your text in, possible your computers default as defined in <code>localeToCharset()</code>. So annotation would look something like this if your text is not already in UTF-8 encoding:</p>
+<ul>
+<li><code>udpipe_annotate(udmodel, x = iconv('your text', to = 'UTF-8'))</code> if your text is in the encoding of the current locale of your computer.</li>
+<li><code>udpipe_annotate(udmodel, x = iconv('your text', from = 'latin1', to = 'UTF-8'))</code> if your text is in latin1 encoding.</li>
+<li><code>udpipe_annotate(udmodel, x = iconv('your text', from = 'CP949', to = 'UTF-8'))</code> if your text is in CP949 encoding.</li>
+</ul>
+</div>
 
 
 

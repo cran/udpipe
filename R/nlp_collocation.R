@@ -39,11 +39,12 @@
 #' \item lfmd: log-frequency biased mutual dependency
 #' }
 #' @export
+#' @aliases keywords_collocation collocation
 #' @examples 
 #' data(brussels_reviews_anno)
 #' x <- subset(brussels_reviews_anno, language %in% "fr")
-#' colloc <- collocation(x, term = "lemma", group = c("doc_id", "sentence_id"), 
-#'                       ngram_max = 3, n_min = 10)
+#' colloc <- keywords_collocation(x, term = "lemma", group = c("doc_id", "sentence_id"), 
+#'                                ngram_max = 3, n_min = 10)
 #' head(colloc, 10)
 #' 
 #' ## Example on finding collocations of nouns preceded by an adjective
@@ -53,10 +54,10 @@
 #' x[, xpos_next := txt_next(xpos, n = 1), by = list(doc_id, sentence_id)]
 #' x <- subset(x, (xpos %in% c("NN") & xpos_previous %in% c("JJ")) | 
 #'                (xpos %in% c("JJ") & xpos_next %in% c("NN")))
-#' colloc <- collocation(x, term = "lemma", group = c("doc_id", "sentence_id"), 
-#'                       ngram_max = 2, n_min = 2)
+#' colloc <- keywords_collocation(x, term = "lemma", group = c("doc_id", "sentence_id"), 
+#'                                ngram_max = 2, n_min = 2)
 #' head(colloc)
-collocation <- function(x, term, group, ngram_max = 2, n_min = 2, sep = " "){
+keywords_collocation <- function(x, term, group, ngram_max = 2, n_min = 2, sep = " "){
   ## R CMD check happiness
   txt.original <- .N <- bigram <- left <- right <- n <- n_left <- n_right <- pmi <- md <- lfmd <- NULL
   ngram_max <- as.integer(ngram_max)
@@ -98,8 +99,14 @@ collocation <- function(x, term, group, ngram_max = 2, n_min = 2, sep = " "){
   result <- rbindlist(result, fill = TRUE, idcol = "ngram")
   result$collocation <- paste(result$left, result$right, sep = sep)
   result$ngram <- result$ngram + 1
-  result <- result[order(result$pmi, decreasing = TRUE), c("ngram", "collocation", "left", "right", "n", "n_left", "n_right", "pmi", "md", "lfmd")]
-  result <- data.table::setnames(result, old = c("n", "n_left", "n_right"), new = c("freq_collocation", "freq_left", "freq_right"))
+  result <- result[order(result$pmi, decreasing = TRUE), c("collocation", "ngram", "left", "right", "n", "n_left", "n_right", "pmi", "md", "lfmd")]
+  result <- data.table::setnames(result, 
+                                 old = c("collocation", "n", "n_left", "n_right"), 
+                                 new = c("keyword", "freq", "freq_left", "freq_right"))
   result <- setDF(result)
   result
 }
+
+#' @export
+#' @rdname keywords_collocation
+collocation <- keywords_collocation

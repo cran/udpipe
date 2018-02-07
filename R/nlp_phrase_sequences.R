@@ -15,14 +15,20 @@
 #' @param sep character indicating how to collapse the phrase of terms which are found. Defaults to using a space.
 #' @param ngram_max an integer indicating to allow phrases to be found up to \code{ngram} maximum number of terms following each other. Only 
 #' used if is_regex is set to TRUE. Defaults to 8.
-#' @return a data.frame with columns 
+#' @param detailed logical indicating to return the exact positions where the phrase was found (set to \code{TRUE}) or just how many times each phrase is occurring (set to \code{FALSE}). 
+#' Defaults to \code{TRUE}.
+#' @return If argument \code{detailed} is set to \code{TRUE} a data.frame with columns 
 #' \itemize{
+#' \item keyword: the phrase which corresponds to the collapsed terms of where the pattern was found
+#' \item ngram: the length of the phrase
+#' \item pattern: the pattern which was found
 #' \item start: the starting index of \code{x} where the pattern was found
 #' \item end: the ending index of \code{x} where the pattern was found
-#' \item pattern: the pattern which was found
-#' \item phrase: the phrase which corresponds to the collapsed terms of where the pattern was found
 #' }
+#' If argument \code{detailed} is set to \code{FALSE} will return aggregate frequency statistics in a data.frame containing the columns keyword, 
+#' ngram and freq (how many time it is occurring)
 #' @export
+#' @aliases keywords_phrases phrases
 #' @seealso \code{\link{as_phrasemachine}}
 #' @details Common phrases which you might be interested in and which can be supplied to \code{pattern} are
 #' \itemize{
@@ -40,26 +46,30 @@
 #' x <- subset(brussels_reviews_anno, language %in% "fr")
 #' 
 #' ## Find exactly this sequence of POS tags
-#' np <- phrases(x$xpos, pattern = c("DT", "NN", "VB", "RB", "JJ"), sep = "-")
+#' np <- keywords_phrases(x$xpos, pattern = c("DT", "NN", "VB", "RB", "JJ"), sep = "-")
 #' head(np)
-#' np <- phrases(x$xpos, pattern = c("DT", "NN", "VB", "RB", "JJ"), term = x$token)
+#' np <- keywords_phrases(x$xpos, pattern = c("DT", "NN", "VB", "RB", "JJ"), term = x$token)
 #' head(np)
 #' 
 #' ## Find noun phrases with the following regular expression: (A|N)+N(P+D*(A|N)*N)*
 #' x$phrase_tag <- as_phrasemachine(x$xpos, type = "penn-treebank")
-#' nounphrases <- phrases(x$phrase_tag, term = x$token, 
-#'                        pattern = "(A|N)+N(P+D*(A|N)*N)*", is_regex = TRUE, ngram_max = 4)
+#' nounphrases <- keywords_phrases(x$phrase_tag, term = x$token, 
+#'                                 pattern = "(A|N)+N(P+D*(A|N)*N)*", is_regex = TRUE, 
+#'                                 ngram_max = 4, 
+#'                                 detailed = TRUE)
 #' head(nounphrases, 10)
-#' head(sort(table(nounphrases$phrase), decreasing=TRUE), 20)
+#' head(sort(table(nounphrases$keyword), decreasing=TRUE), 20)
 #' 
 #' ## Find frequent sequences of POS tags
 #' library(data.table)
 #' x <- as.data.table(x)
 #' x <- x[, pos_sequence := txt_nextgram(x = xpos, n = 3), by = list(doc_id, sentence_id)]
 #' tail(sort(table(x$pos_sequence)))
-#' np <- phrases(x$xpos, term = x$token, pattern = c("IN", "DT", "NN"))
+#' np <- keywords_phrases(x$xpos, term = x$token, pattern = c("IN", "DT", "NN"))
 #' head(np)
-phrases <- function(x, term = x, pattern, is_regex = FALSE, sep = " ", ngram_max = 8){
+keywords_phrases <- function(x, term = x, pattern, is_regex = FALSE, sep = " ", ngram_max = 8, detailed = TRUE){
+  # R CMD check happiness
+  freq <- keyword <- ngram <- .N <- NULL
   stopifnot(length(x) == length(term))
   ngram_max <- as.integer(ngram_max)
   if(is_regex){
@@ -92,8 +102,21 @@ phrases <- function(x, term = x, pattern, is_regex = FALSE, sep = " ", ngram_max
                         phrase = txt[i], stringsAsFactors = FALSE)  
     }
   }
+  out$ngram <- out$end - out$start + 1L
+  out <- data.table::setnames(out, old = c("phrase"), new = c("keyword"))
+  out <- data.table::setcolorder(out, neworder = c("keyword", "ngram", "pattern", "start", "end"))
+  if(!detailed){
+    out <- setDT(out)
+    out <- out[, list(freq = .N), by = list(keyword, ngram)]
+    out <- setorder(out, -freq)
+    out <- setDF(out)
+  }
   out
 }
+
+#' @export
+#' @rdname keywords_phrases
+phrases <- keywords_phrases
 
 
 #' @title Convert Parts of Speech tags to one-letter tags which can be used to identify phrases based on regular expressions

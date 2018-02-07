@@ -209,3 +209,127 @@ udpipe_read_conllu <- function(file){
             error = "")
   read_connlu(x, is_udpipe_annotation = FALSE)
 }
+
+
+
+#' @title Convert a data.frame to CONLL-U format 
+#' @description If you have a data.frame with annotations containing 1 row per token, you can convert it to CONLL-U format with this function.
+#' The data frame is required to have the following columns: doc_id, sentence_id, sentence, token_id, token and
+#' optionally has the following columns: lemma, upos, xpos, feats, head_token_id, dep_rel, deps, misc. Where these fields
+#' have the following meaning
+#' \itemize{
+#' \item doc_id: the identifier of the document
+#' \item sentence_id: the identifier of the sentence
+#' \item sentence: the text of the sentence for which this token is part of
+#' \item token_id: Word index, integer starting at 1 for each new sentence; may be a range for multiword tokens; may be a decimal number for empty nodes.
+#' \item token: Word form or punctuation symbol.
+#' \item lemma: Lemma or stem of word form.
+#' \item upos: Universal part-of-speech tag.
+#' \item xpos: Language-specific part-of-speech tag; underscore if not available.
+#' \item feats: List of morphological features from the universal feature inventory or from a defined language-specific extension; underscore if not available.
+#' \item head_token_id: Head of the current word, which is either a value of token_id or zero (0).
+#' \item dep_rel: Universal dependency relation to the HEAD (root iff HEAD = 0) or a defined language-specific subtype of one.
+#' \item deps: Enhanced dependency graph in the form of a list of head-deprel pairs.
+#' \item misc: Any other annotation.
+#' }
+#' The tokens in the data.frame should be ordered as they appear in the sentence.
+#' @param x a data.frame with columns doc_id, sentence_id, sentence, 
+#' token_id, token, lemma, upos, xpos, feats, head_token_id, deprel, dep_rel, misc
+#' @return a character string of length 1 containing the data.frame in CONLL-U format. See the example. You can easily save this to disk for processing in other applications.
+#' @export
+#' @references \url{http://universaldependencies.org/format.html}
+#' @examples 
+#' file_conllu <- system.file(package = "udpipe", "dummydata", "traindata.conllu")
+#' x <- udpipe_read_conllu(file_conllu)
+#' str(x)
+#' conllu <- as_conllu(x)
+#' cat(conllu)
+#' \dontrun{
+#' ## Write it to file, making sure it is in UTF-8
+#' cat(as_conllu(x), file = file("annotations.conllu", encoding = "UTF-8"))
+#' }
+#' 
+#' ## Some fields are not mandatory, they will assummed to be NA
+#' conllu <- as_conllu(x[, c('doc_id', 'sentence_id', 'sentence', 
+#'                           'token_id', 'token', 'upos')])
+#' cat(conllu)
+as_conllu <- function(x){
+  stopifnot(is.data.frame(x))
+  stopifnot(all(c("doc_id", "sentence_id", "sentence", "token_id", "token") %in% colnames(x)))
+  replaceNA <- function(x){
+    x[is.na(x)] <- "_"
+    x
+  }
+  required_fields <- c("token_id", "token", "lemma", "upos", "xpos", "feats", "head_token_id", "dep_rel", "deps", "misc")
+  missing_fields <- setdiff(required_fields, colnames(x))
+  if(length(missing_fields) > 0){
+    message(sprintf("Missing columns %s => will set them to NA", paste(missing_fields, collapse = ", ")))
+  }
+  for(field in required_fields){
+    if(!field %in% colnames(x)){
+      x[[field]] <- NA
+    }
+    x[[field]] <- replaceNA(x[[field]])
+  }
+  ##
+  ## Conllu files basically look like this:
+  ##
+  ## # newdoc id = document_identification
+  ## # sent_id = idofthesentence
+  ## # text = From the BlogFeed comes this story :
+  ## 1	From	from	ADP	IN	_	3	case	3:case	_
+  ## ...
+  ##
+  x$.newdoc <- !duplicated(x$doc_id)
+  x$.first <- !duplicated(x[, c("doc_id", "sentence_id")])
+  ## l
+  x$.header <- ifelse(x$.first, sprintf("%s%s# sent_id = %s\n# text = %s\n", 
+                                        ifelse(seq_len(nrow(x)) == 1, "", "\n"), 
+                                        ifelse(x$.newdoc, sprintf("# newdoc id = %s\n", x$doc_id), ""),
+                                        x$sentence_id, x$sentence), "")
+  x$.core <- sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", 
+                     x$token_id, 
+                     x$token, 
+                     x$lemma, 
+                     x$upos, 
+                     x$xpos, 
+                     x$feats, 
+                     x$head_token_id, 
+                     x$dep_rel, 
+                     x$deps, 
+                     x$misc)
+  txt <- paste(x$.header, x$.core, sep = "")
+  txt <- paste(txt, collapse = "")
+  sprintf("%s\n", txt)
+}
+
+
+#' @title Convert a matrix of word vectors to word2vec format 
+#' @description The word2vec format provides in the first line the dimension of the word vectors and in the following lines one
+#' has the elements of the wordvector where each line covers one word or token.\cr
+#' 
+#' The function is basically a utility function which allows one to write wordvectors created with other R packages in 
+#' the well-known word2vec format which is used by \code{udpipe_train} to train the dependency parser.
+#' @param x a matrix with word vectors where the rownames indicate the word or token and the number of columns
+#' of the matrix indicate the side of the word vector
+#' @return a character string of length 1 containing the word vectors in word2vec format which can be written to a file on disk
+#' @export
+#' @examples
+#' wordvectors <- matrix(rnorm(1000), nrow = 100, ncol = 10)
+#' rownames(wordvectors) <- sprintf("word%s", seq_len(nrow(wordvectors)))
+#' wv <- as_word2vec(wordvectors)
+#' cat(wv)
+#' 
+#' f <- file(tempfile(fileext = ".txt"), encoding = "UTF-8")
+#' cat(wv, file = f)
+#' close(f)
+as_word2vec <- function(x){
+  stopifnot(is.matrix(x))
+  line1 <- sprintf("%s %s", nrow(x), ncol(x))
+  lines_rest <- mapply(token = rownames(x), i = seq_len(nrow(x)), FUN=function(token, i){
+    line <- sprintf("%s %s", token, paste(as.character(x[i, ]), collapse = " "))
+    line
+  })
+  x <- c(line1, lines_rest)
+  paste(x, collapse = "\n")
+}
