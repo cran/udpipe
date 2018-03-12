@@ -28,6 +28,7 @@ vignette("udpipe-tryitout", package = "udpipe")
 vignette("udpipe-annotation", package = "udpipe")
 vignette("udpipe-train", package = "udpipe")
 vignette("udpipe-usecase-postagging-lemmatisation", package = "udpipe")
+vignette("udpipe-usecase-topicmodelling", package = "udpipe")
 ```
 
 For installing the development version of this package: `devtools::install_github("bnosac/udpipe", build_vignettes = TRUE)`
@@ -71,6 +72,12 @@ Pre-trained Universal Dependencies 2.0 models on all UD treebanks are made avail
 afrikaans, ancient_greek-proiel, ancient_greek, arabic, basque, belarusian, bulgarian, catalan, chinese, coptic, croatian, czech-cac, czech-cltt, czech, danish, dutch-lassysmall, dutch, english-lines, english-partut, english, estonian, finnish-ftb, finnish, french-partut, french-sequoia, french, galician-treegal, galician, german, gothic, greek, hebrew, hindi, hungarian, indonesian, irish, italian, japanese, kazakh, korean, latin-ittb, latin-proiel, latin, latvian, lithuanian, norwegian-bokmaal, norwegian-nynorsk, old_church_slavonic, persian, polish, portuguese-br, portuguese, romanian, russian-syntagrus, russian, sanskrit, serbian, slovak, slovenian-sst, slovenian, spanish-ancora, spanish, swedish-lines, swedish, tamil, turkish, ukrainian, urdu, uyghur, vietnamese. 
 
 These have been made available easily to users of the package by using `udpipe_download_model`
+
+### How good are these models? 
+
+- Accuracy statistics of models provided by the UDPipe authors which you download with udpipe_download_model from the default repository are available at [this link](https://github.com/jwijffels/udpipe.models.ud.2.0/blob/master/inst/udpipe-ud-2.0-170801/README).
+- Accuracy statistics of models trained using this R package which you download with udpipe_download_model from the bnosac/udpipe.models.ud repository are available at https://github.com/bnosac/udpipe.models.ud.
+- For a comparison between UDPipe and spaCy visit https://github.com/jwijffels/udpipe-spacy-comparison
 
 ## Train your own models based on CONLL-U data
 
