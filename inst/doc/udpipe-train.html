@@ -11,7 +11,7 @@
 
 <meta name="author" content="Jan Wijffels" />
 
-<meta name="date" content="2018-03-12" />
+<meta name="date" content="2018-05-11" />
 
 <title>UDPipe Natural Language Processing - Model Building</title>
 
@@ -225,7 +225,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">UDPipe Natural Language Processing - Model Building</h1>
 <h4 class="author"><em>Jan Wijffels</em></h4>
-<h4 class="date"><em>2018-03-12</em></h4>
+<h4 class="date"><em>2018-05-11</em></h4>
 
 </div>
 
@@ -235,7 +235,7 @@ div.tocify {
 <p>This package vignette shows how to build your own text annotation models based on UDPipe, allowing you to have full control over how you like that the model will execute: Tokenization (1), Parts of Speech tagging (2), Lemmatization (3) and Dependency Parsing (4).</p>
 <p>This section is also relevant if you work in a commercial setting where you would like to build and use your own models to annotate text. Note that some pre-trained models which you can download with <code>udpipe_download_model</code> were released under the CC-BY-NC-SA license, others were released under the CC-BY-SA license, the latter allowing for more liberal use. Mark that if you want to see how these models have been built, you can take inspiration from the training code which is available at <a href="https://github.com/bnosac/udpipe.models.ud" class="uri">https://github.com/bnosac/udpipe.models.ud</a>.</p>
 <p>In order to train annotation models, you need to have data in <strong>CONLL-U format</strong>, a format which is described at <a href="http://universaldependencies.org/format.html" class="uri">http://universaldependencies.org/format.html</a>. At the time of writing this, for more than 50 languages, open treebanks in CONLL-U format are made available for download at <a href="http://universaldependencies.org/#ud-treebanks" class="uri">http://universaldependencies.org/#ud-treebanks</a>. Most of these treebanks are distributed under the CC-BY-SA license which allows commercial use.</p>
-<p>Mark that if you will build your own models, you will probably be interested in reading the paper with the details of the techniques used by UDPipe: “Tokenizing, POS Tagging, Lemmatizing and Parsing UD 2.0 with UDPipe”, available at <a href="http://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf" class="uri">http://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf</a>.</p>
+<p>Mark that if you will build your own models, you will probably be interested in reading the paper with the details of the techniques used by UDPipe: “Tokenizing, POS Tagging, Lemmatizing and Parsing UD 2.0 with UDPipe”, available at <a href="http://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf" class="uri">http://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf</a> as well as the paper “UDPipe: Trainable Pipeline for Processing CoNLL-U Files Performing Tokenization, Morphological Analysis, POS Tagging and Parsing”, available at <a href="http://www.lrec-conf.org/proceedings/lrec2016/pdf/873_Paper.pdf" class="uri">http://www.lrec-conf.org/proceedings/lrec2016/pdf/873_Paper.pdf</a>.</p>
 </div>
 <div id="model-building" class="section level2">
 <h2>Model building</h2>
@@ -245,7 +245,7 @@ div.tocify {
 <p>Such at file basically looks like this, or has a similar format. You can just download these from <a href="http://universaldependencies.org" class="uri">http://universaldependencies.org</a> for the language of your choice.</p>
 <pre class="r"><code>file_conllu &lt;- system.file(package = &quot;udpipe&quot;, &quot;dummydata&quot;, &quot;traindata.conllu&quot;)
 file_conllu</code></pre>
-<pre><code>[1] &quot;C:/Users/Jan/AppData/Local/Temp/RtmpuMWHrw/Rinst1bd01a80672c/udpipe/dummydata/traindata.conllu&quot;</code></pre>
+<pre><code>[1] &quot;C:/Users/Jan/AppData/Local/Temp/RtmpqaWkJ8/Rinst1cf063e55f24/udpipe/dummydata/traindata.conllu&quot;</code></pre>
 <pre class="r"><code>cat(head(readLines(file_conllu), 3), sep=&quot;\n&quot;)</code></pre>
 <pre><code># newdoc id = doc1
 # newpar

@@ -19,6 +19,9 @@
 #' 'none' (no dependency parsing needed) or a character string with more complex parsing options 
 #' as specified in \url{http://ufal.mff.cuni.cz/udpipe/users-manual} in which case \code{parser} should be a character string where the options
 #' are put after each other using the semicolon as separation.
+#' @param trace A non-negative integer indicating to show progress on the annotation. 
+#' If positive it prints out a message before each \code{trace} number of elements of \code{x} for which annotation is to be executed,
+#' allowing you to see how much of the text is already annotated. Defaults to FALSE (no progress shown).
 #' @param ... currently not used
 #' @return a list with 3 elements
 #' \itemize{
@@ -65,7 +68,7 @@
 #' 
 #' ## Provide doc_id for joining and identification purpose
 #' x <- udpipe_annotate(ud_dutch, x = txt, doc_id = c("id1", "feedbackabc"),
-#'                      tagger = "none", parser = "none")
+#'                      tagger = "none", parser = "none", trace = TRUE)
 #' as.data.frame(x)
 #' 
 #' ## Mark on encodings: if your data is not in UTF-8 encoding, make sure you convert it to UTF-8 
@@ -77,7 +80,9 @@
 udpipe_annotate <- function(object, x, doc_id = paste("doc", seq_along(x), sep=""), 
                             tokenizer = "tokenizer", 
                             tagger = c("default", "none"), 
-                            parser = c("default", "none"), ...) {
+                            parser = c("default", "none"), 
+                            trace = FALSE, ...) {
+  ## Some input checking
   if(!inherits(object, "udpipe_model")){
     stop("object should be of class udpipe_model as returned by the function ?udpipe_load_model")
   }
@@ -92,8 +97,12 @@ udpipe_annotate <- function(object, x, doc_id = paste("doc", seq_along(x), sep="
   stopifnot(is.character(parser))
   tagger <- tagger[1]
   parser <- parser[1]
-
-  x_conllu <- udp_tokenise_tag_parse(object$model, x, doc_id, tokenizer, tagger, parser)
+  log_every <- as.integer(trace)
+  log_now <- function(){
+    as.character(Sys.time())
+  }
+  ## Annotate
+  x_conllu <- udp_tokenise_tag_parse(object$model, x, doc_id, tokenizer, tagger, parser, log_every, log_now)
   Encoding(x_conllu$conllu) <- "UTF-8"
   class(x_conllu) <- "udpipe_connlu"
   x_conllu
@@ -126,7 +135,7 @@ udpipe_annotate <- function(object, x, doc_id = paste("doc", seq_along(x), sep="
 #' ## cleanup for CRAN only - you probably want to keep your model if you have downloaded it
 #' file.remove("dutch-lassysmall-ud-2.0-170801.udpipe")
 as.data.frame.udpipe_connlu <- function(x, ...){
-  read_connlu(x, is_udpipe_annotation = TRUE)
+  read_connlu(x, is_udpipe_annotation = TRUE, ...)
 }
 
 #' @export
@@ -138,14 +147,25 @@ as.data.table.udpipe_connlu <- function(x, ...){
 }
 
 
-read_connlu <- function(x, is_udpipe_annotation = FALSE){
+read_connlu <- function(x, is_udpipe_annotation = FALSE, ...){
   ## R CMD check happyness
-  doc_id <- paragraph_id <- token_id <- head_token_id <- lemma <- upos <- xpos <- feats <- dep_rel <- deps <- misc <- NULL
+  doc_id <- paragraph_id <- token_id <- head_token_id <- lemma <- upos <- xpos <- feats <- dep_rel <- deps <- misc <- term_id <- .N <- NULL
+  
+  output_fields <- c("doc_id", "paragraph_id", "sentence_id", "sentence", 
+                     "token_id", "token", "lemma", "upos", "xpos", "feats", "head_token_id", "dep_rel", "deps", "misc")
+  ## Undocumented feature
+  ldots <- list(...)
+  if("term_id" %in% names(ldots)){
+    if(isTRUE(ldots$term_id)){
+      output_fields <- append(output_fields, values = "term_id", after = 4)
+    }
+  }
   ## Default output 
   default <- data.frame(doc_id = character(), 
                         paragraph_id = integer(), 
                         sentence_id = character(), 
                         sentence = character(), 
+                        term_id = integer(),
                         token_id = character(), 
                         token = character(), 
                         lemma = character(), 
@@ -156,6 +176,8 @@ read_connlu <- function(x, is_udpipe_annotation = FALSE){
                         dep_rel = character(), 
                         deps = character(), 
                         misc = character(), stringsAsFactors = FALSE)
+  default <- default[, output_fields]
+  
   if(is_udpipe_annotation){
     default$sentence_id <- as.integer(default$sentence_id)
   }
@@ -205,6 +227,9 @@ read_connlu <- function(x, is_udpipe_annotation = FALSE){
   }
   out[, paragraph_id := cumsum(is_newparagraph), by = list(doc_id)]
   out <- out[is_taggeddata, ]
+  if("term_id" %in% output_fields){
+    out[, term_id := 1L:.N, by = list(doc_id)]
+  }
   out <- out[,  c("token_id", "token", "lemma", "upos", "xpos", "feats", "head_token_id", "dep_rel", "deps", "misc") := data.table::tstrsplit(txt, "\t", fixed=TRUE)]
   out[, token_id := underscore_as_na(token_id)]
   out[, head_token_id := underscore_as_na(head_token_id)]
@@ -215,9 +240,8 @@ read_connlu <- function(x, is_udpipe_annotation = FALSE){
   out[, dep_rel := underscore_as_na(dep_rel)]
   out[, deps := underscore_as_na(deps)]
   out[, misc := underscore_as_na(misc)]
-  out <- out[, c("doc_id", "paragraph_id", "sentence_id", "sentence", 
-                 "token_id", "token", "lemma", "upos", "xpos", "feats", "head_token_id", "dep_rel", "deps", "misc"), with = FALSE]
-  data.table::setDF(out)
+  out <- out[, output_fields, with = FALSE]
+  out <- data.table::setDF(out)
   out
 }
 
