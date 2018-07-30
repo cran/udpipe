@@ -1,3 +1,8 @@
+# CHANGES IN udpipe VERSION 0.6.1
+
+- src/udpipe.cpp: at the request of CRAN: remove dynamic execution specification which g++-7 and later complain about by removing the throw statements
+- add ctb role to authors Milan and Jana in DESCRIPTION 
+
 # CHANGES IN udpipe VERSION 0.6
 
 - Added cbind_morphological and cbind_dependencies
