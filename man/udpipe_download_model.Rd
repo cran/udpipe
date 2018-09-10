@@ -19,7 +19,7 @@ udpipe_download_model(language = c("afrikaans", "ancient_greek-proiel",
   "swedish", "tamil", "turkish", "ukrainian", "urdu", "uyghur", "vietnamese"),
   model_dir = getwd(),
   udpipe_model_repo = c("jwijffels/udpipe.models.ud.2.0",
-  "bnosac/udpipe.models.ud"))
+  "bnosac/udpipe.models.ud"), overwrite = TRUE, ...)
 }
 \arguments{
 \item{language}{a character string with a language. \cr
@@ -50,6 +50,12 @@ Defaults to 'jwijffels/udpipe.models.ud.2.0'. \cr
   \item 'bnosac/udpipe.models.ud' contains models mainly released under the CC-BY-SA license
 }
 Visit \url{https://github.com/jwijffels/udpipe.models.ud.2.0} and \url{https://github.com/bnosac/udpipe.models.ud} for further details.}
+
+\item{overwrite}{logical indicating to overwrite the file if the file was already downloaded. Defaults to \code{TRUE} indicating 
+it will download the model and overwrite the file if the file already existed. If set to \code{FALSE},
+the model will only be downloaded if it does not exist on disk yet in the \code{model_dir} folder.}
+
+\item{...}{currently not used}
 }
 \value{
 A data.frame with 1 row and 3 columns: 
@@ -64,17 +70,11 @@ Ready-made models for 52 languages trained on 69 treebanks are provided to you.
 Some or these models were provided by the UDPipe community. Other models were build using this R package.
 You can either download these models manually in order to use it for annotation purposes 
 or use \code{udpipe_download_model} to download these models for a specific language of choice. \cr
-
-The models provided by the UDPipe community are made available for your convenience at \url{https://github.com/jwijffels/udpipe.models.ud.2.0} under the CC-BY-NC-SA
-licence. This function downloads the models by default from that location, so if you use this function you are complying to that license.\cr
-
-If you are working in a commercial setting, you can also choose to download models from \url{https://github.com/bnosac/udpipe.models.ud}. That
-repository contains models build with this R package on open data which allows for commercial usage. 
-The license of these models is mostly CC-BY-SA. Visit that github repository for details on the licenses of the language of your choice. 
-And contact www.bnosac.be if you need support on these models or require models tuned to your needs. \cr
-
-If you need to train models yourself for commercial purposes or if you want to improve models, 
-you can easily do this with \code{\link{udpipe_train}} which is explained in detail in the package vignette.
+\itemize{
+  \item{The models provided by the UDPipe community are made available for your convenience at \url{https://github.com/jwijffels/udpipe.models.ud.2.0} under the CC-BY-NC-SA licence. This function downloads the models by default from that location, so if you use this function you are complying to that license.}
+  \item{If you are working in a commercial setting, you can also choose to download models from \url{https://github.com/bnosac/udpipe.models.ud}. That repository contains models build with this R package on open data which allows for commercial usage. The license of these models is mostly CC-BY-SA. Visit that github repository for details on the licenses of the language of your choice. And contact www.bnosac.be if you need support on these models or require models tuned to your needs.}
+  \item{If you need to train models yourself for commercial purposes or if you want to improve models, you can easily do this with \code{\link{udpipe_train}} which is explained in detail in the package vignette.}
+}
 }
 \details{
 Pre-trained Universal Dependencies 2.0 models on all UD treebanks are made available at 
@@ -108,6 +108,7 @@ x <- udpipe_download_model(language = "french")
 x <- udpipe_download_model(language = "english")
 x <- udpipe_download_model(language = "german")
 x <- udpipe_download_model(language = "spanish")
+x <- udpipe_download_model(language = "spanish", overwrite = FALSE)
 
 x <- udpipe_download_model(language = "english", udpipe_model_repo = "bnosac/udpipe.models.ud")
 x <- udpipe_download_model(language = "dutch", udpipe_model_repo = "bnosac/udpipe.models.ud")

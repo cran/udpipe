@@ -4,17 +4,11 @@
 #' Some or these models were provided by the UDPipe community. Other models were build using this R package.
 #' You can either download these models manually in order to use it for annotation purposes 
 #' or use \code{udpipe_download_model} to download these models for a specific language of choice. \cr
-#' 
-#' The models provided by the UDPipe community are made available for your convenience at \url{https://github.com/jwijffels/udpipe.models.ud.2.0} under the CC-BY-NC-SA
-#' licence. This function downloads the models by default from that location, so if you use this function you are complying to that license.\cr
-#' 
-#' If you are working in a commercial setting, you can also choose to download models from \url{https://github.com/bnosac/udpipe.models.ud}. That
-#' repository contains models build with this R package on open data which allows for commercial usage. 
-#' The license of these models is mostly CC-BY-SA. Visit that github repository for details on the licenses of the language of your choice. 
-#' And contact www.bnosac.be if you need support on these models or require models tuned to your needs. \cr
-#' 
-#' If you need to train models yourself for commercial purposes or if you want to improve models, 
-#' you can easily do this with \code{\link{udpipe_train}} which is explained in detail in the package vignette.
+#' \itemize{
+#'   \item{The models provided by the UDPipe community are made available for your convenience at \url{https://github.com/jwijffels/udpipe.models.ud.2.0} under the CC-BY-NC-SA licence. This function downloads the models by default from that location, so if you use this function you are complying to that license.}
+#'   \item{If you are working in a commercial setting, you can also choose to download models from \url{https://github.com/bnosac/udpipe.models.ud}. That repository contains models build with this R package on open data which allows for commercial usage. The license of these models is mostly CC-BY-SA. Visit that github repository for details on the licenses of the language of your choice. And contact www.bnosac.be if you need support on these models or require models tuned to your needs.}
+#'   \item{If you need to train models yourself for commercial purposes or if you want to improve models, you can easily do this with \code{\link{udpipe_train}} which is explained in detail in the package vignette.}
+#' }
 #' @param language a character string with a language. \cr
 #' Possible values are:
 #' afrikaans, ancient_greek-proiel, ancient_greek, arabic, basque, belarusian, bulgarian, catalan, chinese, coptic, croatian, 
@@ -41,6 +35,10 @@
 #'   \item 'bnosac/udpipe.models.ud' contains models mainly released under the CC-BY-SA license
 #' }
 #' Visit \url{https://github.com/jwijffels/udpipe.models.ud.2.0} and \url{https://github.com/bnosac/udpipe.models.ud} for further details.
+#' @param overwrite logical indicating to overwrite the file if the file was already downloaded. Defaults to \code{TRUE} indicating 
+#' it will download the model and overwrite the file if the file already existed. If set to \code{FALSE},
+#' the model will only be downloaded if it does not exist on disk yet in the \code{model_dir} folder.
+#' @param ... currently not used
 #' @return A data.frame with 1 row and 3 columns: 
 #' \itemize{
 #'  \item{language: }{The language as provided by the input parameter \code{language}}
@@ -82,6 +80,7 @@
 #' x <- udpipe_download_model(language = "english")
 #' x <- udpipe_download_model(language = "german")
 #' x <- udpipe_download_model(language = "spanish")
+#' x <- udpipe_download_model(language = "spanish", overwrite = FALSE)
 #' 
 #' x <- udpipe_download_model(language = "english", udpipe_model_repo = "bnosac/udpipe.models.ud")
 #' x <- udpipe_download_model(language = "dutch", udpipe_model_repo = "bnosac/udpipe.models.ud")
@@ -104,7 +103,9 @@ udpipe_download_model <- function(language = c("afrikaans", "ancient_greek-proie
                                                "swedish-lines", "swedish", "tamil", "turkish", "ukrainian", 
                                                "urdu", "uyghur", "vietnamese"),
                                   model_dir = getwd(),
-                                  udpipe_model_repo = c("jwijffels/udpipe.models.ud.2.0", "bnosac/udpipe.models.ud")) {
+                                  udpipe_model_repo = c("jwijffels/udpipe.models.ud.2.0", "bnosac/udpipe.models.ud"), 
+                                  overwrite = TRUE,
+                                  ...) {
   language <- match.arg(language)
   udpipe_model_repo <- match.arg(udpipe_model_repo)
   if(!dir.exists(model_dir)){
@@ -126,8 +127,10 @@ udpipe_download_model <- function(language = c("afrikaans", "ancient_greek-proie
                      filename)
     to <- file.path(model_dir, filename)
   }
-  message(sprintf("Downloading udpipe model from %s to %s", url, to))
-  utils::download.file(url = url, destfile = to, mode = "wb")
+  if(overwrite || !file.exists(to)){
+    message(sprintf("Downloading udpipe model from %s to %s", url, to))
+    utils::download.file(url = url, destfile = to, mode = "wb")  
+  }
   data.frame(language = language,
              file_model = to,
              url = url,
@@ -138,7 +141,7 @@ udpipe_download_model <- function(language = c("afrikaans", "ancient_greek-proie
 
 #' @title Load an UDPipe model
 #' @description Load an UDPipe model so that it can be use in \code{\link{udpipe_annotate}}
-#' @param file full path to the model
+#' @param file full path to the model or the value returned by a call to \code{\link{udpipe_download_model}}
 #' @return An object of class \code{udpipe_model} which is a list with 2 elements
 #' \itemize{
 #'  \item{file: }{The path to the model as provided by \code{file}}
@@ -161,12 +164,17 @@ udpipe_download_model <- function(language = c("afrikaans", "ancient_greek-proie
 #' ud_hebrew <- udpipe_load_model(x$file_model)
 #' }
 udpipe_load_model <- function(file) {
+  if(is.data.frame(file) && nrow(file) == 1 && "file_model" %in% colnames(file)){
+    file <- file$file_model
+  }
   file <- path.expand(file)
   if(!file.exists(file)){
     stop(sprintf("File %s containing the language model does not exist", file))
   }
   ptr <- udp_load_model(file)
-  structure(
+  out <- structure(
     list(file = file, model = ptr), 
     class = "udpipe_model")
+  .loaded_models[[out$file]] <- out
+  out 
 }

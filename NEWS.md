@@ -1,3 +1,11 @@
+# CHANGES IN udpipe VERSION 0.7
+
+- Allow to reconstruct the original text + allow to add a start/end field in as.data.frame (useful but undocumented feature). Set up mainly to be used with the crfsuite R package
+- Added txt_tagsequence
+- Added 1 general function called udpipe which does annotation of data in TIF format.
+- Add option in udpipe_download_model to download the model only it does not exist on disk
+- Loaded model are put into an environment such that users of the function udpipe do not need to care about loading
+
 # CHANGES IN udpipe VERSION 0.6.1
 
 - src/udpipe.cpp: at the request of CRAN: remove dynamic execution specification which g++-7 and later complain about by removing the throw statements

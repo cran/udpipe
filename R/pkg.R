@@ -5,3 +5,6 @@
 #' @importFrom Matrix sparseMatrix summary crossprod tcrossprod diag 
 #' @useDynLib udpipe
 NULL
+
+
+.loaded_models <- new.env()
