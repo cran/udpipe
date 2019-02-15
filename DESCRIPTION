@@ -2,7 +2,7 @@ Package: udpipe
 Type: Package
 Title: Tokenization, Parts of Speech Tagging, Lemmatization and
         Dependency Parsing with the 'UDPipe' 'NLP' Toolkit
-Version: 0.8
+Version: 0.8.1
 Maintainer: Jan Wijffels <jwijffels@bnosac.be>
 Authors@R: c(person('Jan', 'Wijffels', role = c('aut', 'cre', 'cph'), email = 'jwijffels@bnosac.be'), 
     person('BNOSAC', role = 'cph'), 
@@ -28,7 +28,7 @@ SystemRequirements: C++11
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2018-12-05 13:38:27 UTC; Jan
+Packaged: 2019-02-15 10:23:53 UTC; Jan
 Author: Jan Wijffels [aut, cre, cph],
   BNOSAC [cph],
   Institute of Formal and Applied Linguistics, Faculty of Mathematics and
@@ -36,4 +36,4 @@ Author: Jan Wijffels [aut, cre, cph],
   Milan Straka [ctb, cph],
   Jana Straková [ctb, cph]
 Repository: CRAN
-Date/Publication: 2018-12-09 15:10:03 UTC
+Date/Publication: 2019-02-15 14:00:03 UTC
