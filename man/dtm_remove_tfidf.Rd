@@ -4,10 +4,10 @@
 \alias{dtm_remove_tfidf}
 \title{Remove terms from a Document-Term-Matrix and documents with no terms based on the term frequency inverse document frequency}
 \usage{
-dtm_remove_tfidf(dtm, top, cutoff, prob)
+dtm_remove_tfidf(dtm, top, cutoff, prob, remove_emptydocs = TRUE)
 }
 \arguments{
-\item{dtm}{an object returned by \code{\link{document_term_matrix}} or an object of class DocumentTermMatrix}
+\item{dtm}{an object returned by \code{\link{document_term_matrix}}}
 
 \item{top}{integer with the number of terms which should be kept as defined by the highest mean tfidf}
 
@@ -15,9 +15,11 @@ dtm_remove_tfidf(dtm, top, cutoff, prob)
 
 \item{prob}{numeric quantile indicating to keep only terms in \code{dtm} where the tfidf obtained by \code{dtm_tfidf} is higher than 
 the \code{prob} percent quantile}
+
+\item{remove_emptydocs}{logical indicating to remove documents containing no more terms after the term removal is executed. Defaults to \code{TRUE}.}
 }
 \value{
-a sparse Matrix as returned by \code{sparseMatrix} or an object of class \code{DocumentTermMatrix} 
+a sparse Matrix as returned by \code{sparseMatrix} 
 where terms with high tfidf are kept and documents without any remaining terms are removed
 }
 \description{
@@ -36,6 +38,8 @@ dim(dtm)
 
 ## Keep only terms with high tfidf
 x <- dtm_remove_tfidf(dtm, top=50)
+dim(x)
+x <- dtm_remove_tfidf(dtm, top=50, remove_emptydocs = FALSE)
 dim(x)
 
 ## Keep only terms with tfidf above 1.1

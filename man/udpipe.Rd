@@ -4,7 +4,7 @@
 \alias{udpipe}
 \title{Tokenising, Lemmatising, Tagging and Dependency Parsing of raw text in TIF format}
 \usage{
-udpipe(x, object, ...)
+udpipe(x, object, parallel.cores = 1L, parallel.chunksize, ...)
 }
 \arguments{
 \item{x}{either
@@ -18,6 +18,14 @@ All text data should be in UTF-8 encoding}
 \item{object}{either an object of class \code{udpipe_model} as returned by \code{\link{udpipe_load_model}},
 the path to the file on disk containing the udpipe model or the language as defined by \code{\link{udpipe_download_model}}. 
 If the language is provided, it will download the model using \code{\link{udpipe_download_model}}.}
+
+\item{parallel.cores}{integer indicating the number of parallel cores to use to speed up the annotation. Defaults to 1 (use only 1 single thread). \cr
+If more than 1 is specified, it uses parallel::mclapply (unix) or parallel::clusterApply (windows) to run annotation in parallel. In order to do this on Windows it runs first parallel::makeCluster to set up a local socket cluster, on unix it just uses forking to parallelise the annotation.\cr
+Only set this if you have more than 1 CPU at disposal and you have large amount of data to annotate as setting up a parallel backend also takes some time plus 
+annotations will run in chunks set by \code{parallel.chunksize} and for each parallel chunk the udpipe model will be loaded which takes also some time.\cr
+If \code{parallel.cores} is bigger than 1 and \code{object} is of class \code{udpipe_model}, it will load the corresponding file from the model again in each parallel chunk.}
+
+\item{parallel.chunksize}{integer with the size of the chunks of text to be annotated in parallel. If not provided, defaults to the size of \code{x} divided by \code{parallel.cores}. Only used in case \code{parallel.cores} is bigger than 1.}
 
 \item{...}{other elements to pass on to \code{\link{udpipe_annotate}} and \code{\link{udpipe_download_model}}}
 }
@@ -50,8 +58,9 @@ are character data in UTF-8 encoding. \cr
 Tokenising, Lemmatising, Tagging and Dependency Parsing of raw text in TIF format
 }
 \examples{
-ud_dutch <- udpipe_download_model(language = "dutch-lassysmall")
-ud_dutch <- udpipe_load_model(ud_dutch)
+model    <- udpipe_download_model(language = "dutch-lassysmall")
+if(!model$download_failed){
+ud_dutch <- udpipe_load_model(model)
 
 ## Tokenise, Tag and Dependency Parsing Annotation. Output is in CONLL-U format.
 txt <- c("Dus. Godvermehoeren met pus in alle puisten, 
@@ -83,9 +92,10 @@ x <- udpipe(data.frame(doc_id = names(txt), text = txt, stringsAsFactors = FALSE
             object = "dutch-lassysmall")
 x <- udpipe(strsplit(txt, "[[:space:][:punct:][:digit:]]+"), 
             object = "dutch-lassysmall")
+}
             
 ## cleanup for CRAN only - you probably want to keep your model if you have downloaded it
-file.remove("dutch-lassysmall-ud-2.3-181115.udpipe")
+if(file.exists(model$file_model)) file.remove(model$file_model)
 }
 \references{
 \url{https://ufal.mff.cuni.cz/udpipe}, \url{https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-2364}, 
