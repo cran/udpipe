@@ -1,30 +1,42 @@
-if(FALSE){
-  library(udpipe)
-  txt <- "  Maxime y su mujer\\ hicieron que nuestra estancia 
-    fuera lo mas comoda posible. \n  
-    El primer dia Maxime nos espero hasta tarde para recibirnos y 
-    darnos todas las indicaciones posibles del apartamento y 
-    de la situacion de aparcamiento en el barrio ya que fuimos 
-    desde Espana con el coche ( es todo zona azul de 9:00 a 18:00 pero 
-    como saliamos pronto y llegabamos tarde no nos afectaba).\n  
-    El apartamento es muy completo, la verdad es como aparece 
-    en el anuncio, es mas, incluso tiene una barandilla 
-    en la escaleras que dan a la habitacion que en la foto no sale.\n   
-    El jardin esta muy bien para desayunar o cenar ya que 
-    tiene una mesa grande para ello.\n   
-    El barrio es muy tranquilo con bastantes tiendas y restaurantes.\n
-       En general estuvimos muy comodos durante nuestra estancia, 
-       repetiriamos ahora mismo.\n   Muchas gracias por todo Maxime.  "
-  ud_model <- udpipe_download_model(language = "spanish")
-  ud_model <- udpipe_load_model(ud_model$file_model)
-  x <- udpipe_annotate(ud_model, x = txt)
-  x <- as.data.frame(x, from_to = TRUE)
-  original <- udpipe_reconstruct(sentence_id = x$sentence_id, token = x$token, token_id = x$token_id, misc = x$misc)
-}
+# if(FALSE){
+#   library(udpipe)
+#   txt <- "  Maxime  y su mujer\\ hicieron que nuestra estancia 
+#     fuera lo mas comoda posible. \n  
+#     El primer dia Maxime nos espero hasta tarde para recibirnos y 
+#     darnos todas las indicaciones posibles del apartamento y 
+#     de la situacion de aparcamiento en el barrio ya que fuimos 
+#     desde Espana con el coche ( es todo zona azul de 9:00 a 18:00 pero 
+#     como saliamos pronto y llegabamos tarde no nos afectaba).\n  
+#     El apartamento es muy completo, la verdad es como aparece 
+#     en el anuncio, es mas, incluso tiene una barandilla 
+#     en la escaleras que dan a la habitacion que en la foto no sale.\n   
+#     El jardin esta muy bien para desayunar o cenar ya que 
+#     tiene una mesa grande para ello.\n   
+#     El barrio es muy tranquilo con bastantes tiendas y restaurantes.\n
+#        En general estuvimos muy comodos durante nuestra estancia, 
+#        repetiriamos ahora mismo.\n   Muchas gracias por todo Maxime.  "
+#   ud_model <- udpipe_download_model(language = "spanish")
+#   ud_model <- udpipe_load_model(ud_model$file_model)
+#   x <- udpipe_annotate(ud_model, x = txt)
+#   x <- as.data.frame(x, detailed = TRUE)
+#   original <- udpipe_reconstruct(sentence_id = x$sentence_id, token = x$token, token_id = x$token_id, misc = x$misc)
+#   
+#   ## TEST
+#   library(udpipe)
+#   data(brussels_reviews, package = "udpipe")
+#   comments <- subset(brussels_reviews, language %in% "es")
+#   comments <- data.frame(doc_id = comments$id, text = comments$feedback, stringsAsFactors = FALSE)
+#   x <- udpipe(comments, "spanish-ancora", trace = 50)
+#   x <- merge(x, comments, by = "doc_id", sort = FALSE)
+#   test <- mapply(text = x$text, start = x$start, end = x$end, token = x$token, FUN=function(text, start, end, token){
+#     substr(text, start, end) == token
+#   }, USE.NAMES = FALSE)
+#   sum(!test, na.rm=TRUE) == 0
+# }
 
 
 udpipe_reconstruct <- function(sentence_id, token, token_id, misc, only_from_to = FALSE){
-
+  
   ##
   ## FROM THE UDPIPE DOCS: 
   ##
@@ -41,13 +53,14 @@ udpipe_reconstruct <- function(sentence_id, token, token_id, misc, only_from_to 
   # \n: LF character
   # \p: | (pipe character)
   # \\: \ (backslash character)
-
+  
   rawtxt <- token
   
   has_spacesafter_no <- grepl(pattern = "SpaceAfter=No", misc)
-  has_spacesafter <- grepl(pattern = "SpacesAfter=", misc)
-  has_spacesbefore <- grepl(pattern = "SpacesBefore=", misc)
-  has_spacesintoken <- grepl(pattern = "SpacesInToken=", misc)
+  has_spacesafter    <- grepl(pattern = "SpacesAfter=", misc)
+  has_spacesbefore   <- grepl(pattern = "SpacesBefore=", misc)
+  has_spacesintoken  <- grepl(pattern = "SpacesInToken=", misc)
+  has_multiple       <- grepl(pattern = "\\|", misc)
   
   ##
   ## Spaces after
@@ -61,7 +74,16 @@ udpipe_reconstruct <- function(sentence_id, token, token_id, misc, only_from_to 
   after[has_spacesafter_no] <- ""
   ## if contains SpacesAfter=, add the spaces to the after part
   idx <- which(has_spacesafter)
-  addme <- gsub(pattern = "(SpacesAfter=)(.+)($|Spaces)", "\\2", misc[idx])
+  #addme <- gsub(pattern = "(SpacesAfter=)(.+)($|Spaces)", "\\2", misc[idx])
+  addme <- gsub(pattern = "(SpacesAfter=)(.+)", "\\2", misc[idx])
+  idx_multiple <- which(has_spacesafter & has_multiple)
+  if(length(idx_multiple) > 0){
+    addme_multiple <- sapply(strsplit(misc[idx_multiple], split = "\\|"), FUN=function(x) grep(pattern = "SpacesAfter", x = x, value = TRUE))
+    addme_multiple <- gsub(pattern = "SpacesAfter=", replacement = "", addme_multiple)
+    addme[which(idx_multiple %in% idx)] <- addme_multiple
+  }
+  #addme <- sapply(strsplit(misc[idx], split = "\\|"), FUN=function(x) grep(pattern = "SpacesAfter", x = x, value = TRUE))
+  #addme <- gsub(pattern = "SpacesAfter=", replacement = "", addme)
   addme <- gsub("\\\\s", " ", addme)
   addme <- gsub("\\\\n", "\n", addme)
   addme <- gsub("\\\\t", "\t", addme)
@@ -78,7 +100,16 @@ udpipe_reconstruct <- function(sentence_id, token, token_id, misc, only_from_to 
   before <- rep("", length(token))
   ## if contains SpacesBefore=, add the spaces to the after part
   idx <- which(has_spacesbefore)
-  addme <- gsub(pattern = "(SpacesBefore=)(.+)($|Spaces)", "\\2", misc[idx])
+  #addme <- gsub(pattern = "(SpacesBefore=)(.+)($|Spaces)", "\\2", misc[idx])
+  addme <- gsub(pattern = "(SpacesBefore=)(.+)", "\\2", misc[idx])
+  idx_multiple <- which(has_spacesbefore & has_multiple)
+  if(length(idx_multiple) > 0){
+    addme_multiple <- sapply(strsplit(misc[idx_multiple], split = "\\|"), FUN=function(x) grep(pattern = "SpacesBefore", x = x, value = TRUE))
+    addme_multiple <- gsub(pattern = "SpacesBefore=", replacement = "", addme_multiple)
+    addme[which(idx_multiple %in% idx)] <- addme_multiple
+  }
+  #addme <- sapply(strsplit(misc[idx], split = "\\|"), FUN=function(x) grep(pattern = "SpacesBefore", x = x, value = TRUE))
+  #addme <- gsub(pattern = "SpacesBefore=", replacement = "", addme)
   addme <- gsub("\\\\s", " ", addme)
   addme <- gsub("\\\\n", "\n", addme)
   addme <- gsub("\\\\t", "\t", addme)
@@ -91,7 +122,17 @@ udpipe_reconstruct <- function(sentence_id, token, token_id, misc, only_from_to 
   ## SpacesInToken - MISC field stores form of the token including original spaces if there is a space in the token which can not be handled by FORM
   ##
   idx <- which(has_spacesintoken)
-  token[idx] <- gsub(pattern = "(SpacesInToken=)(.+)($|Spaces)", "\\2", misc[idx])
+  #token[idx] <- gsub(pattern = "(SpacesInToken=)(.+)($|Spaces)", "\\2", misc[idx])
+  addme <- gsub(pattern = "(SpacesInToken=)(.+)", "\\2", misc[idx])
+  idx_multiple <- which(has_spacesintoken & has_multiple)
+  if(length(idx_multiple) > 0){
+    addme_multiple <- sapply(strsplit(misc[idx_multiple], split = "\\|"), FUN=function(x) grep(pattern = "SpacesInToken", x = x, value = TRUE))
+    addme_multiple <- gsub(pattern = "SpacesInToken=", replacement = "", addme_multiple)
+    addme[which(idx_multiple %in% idx)] <- addme_multiple
+  }
+  #addme <- sapply(strsplit(misc[idx], split = "\\|"), FUN=function(x) grep(pattern = "SpacesInToken", x = x, value = TRUE))
+  #addme <- gsub(pattern = "SpacesInToken=", replacement = "", addme)
+  token[idx] <- addme
   
   ##
   ## Construct original text
@@ -107,7 +148,7 @@ udpipe_reconstruct <- function(sentence_id, token, token_id, misc, only_from_to 
                        token_id = token_id[is_multi_word], 
                        FUN=function(sentence_id, token_id){
                          sprintf("%s.%s", sentence_id, unlist(strsplit(token_id, split = "-")))
-                         }, SIMPLIFY = TRUE, USE.NAMES = FALSE)
+                       }, SIMPLIFY = TRUE, USE.NAMES = FALSE)
   idx <- which(ids %in% ids_remove)
   original_txt[idx] <- ""
   
@@ -124,7 +165,7 @@ udpipe_reconstruct <- function(sentence_id, token, token_id, misc, only_from_to 
   to <- original_to - nchar(after)
   from[idx] <- NA_integer_
   to[idx] <- NA_integer_
-
+  
   
   if(only_from_to){
     return(list(from = from, to = to))  

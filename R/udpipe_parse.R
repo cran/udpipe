@@ -90,6 +90,11 @@ udpipe_annotate <- function(object, x, doc_id = paste("doc", seq_along(x), sep="
   if(!inherits(object, "udpipe_model")){
     stop("object should be of class udpipe_model as returned by the function ?udpipe_load_model")
   }
+  check <- capture.output(object$model)
+  if(check %in% "<pointer: (nil)>"){
+    message(paste("This looks like you restarted your R session which has invalidated the model object, trying now to reload the model again from the file at", object$file, "in order to do the annotation."))
+    object <- udpipe_load_model(object$file)
+  }
   if(inherits(x, "factor")){
     x <- as.character(x)
   }
@@ -128,18 +133,21 @@ udpipe_annotate <- function(object, x, doc_id = paste("doc", seq_along(x), sep="
 #' are character data in UTF-8 encoding. \cr
 #' 
 #' To get more information on these fields, visit \url{http://universaldependencies.org/format.html} 
-#' or look at \code{link{udpipe}}.
+#' or look at \code{\link{udpipe}}.
 #' @seealso \code{\link{udpipe_annotate}}
 #' @export
 #' @examples 
 #' model    <- udpipe_download_model(language = "dutch-lassysmall")
+#' 
 #' if(!model$download_failed){
+#' 
 #' ud_dutch <- udpipe_load_model(model$file_model)
 #' txt <- c("Ik ben de weg kwijt, kunt u me zeggen waar de Lange Wapper ligt? Jazeker meneer", 
 #'          "Het gaat vooruit, het gaat verbazend goed vooruit")
 #' x <- udpipe_annotate(ud_dutch, x = txt)
 #' x <- as.data.frame(x)
 #' head(x)
+#' 
 #' }
 #' 
 #' ## cleanup for CRAN only - you probably want to keep your model if you have downloaded it
