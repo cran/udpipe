@@ -51,7 +51,7 @@ x <- udpipe(x = "Ik ging op reis en ik nam mee: mijn laptop, mijn zonnebril en g
             object = "dutch")
 ```
 
-The annotation returns paragraphs, sentences, tokens, the location of the token in the original text, morphology elements like the lemma, the universal part of speech tag and the treebank-specific parts of speech tag, morphosyntactic features and returns as well the dependency relationship. More information at http://universaldependencies.org/guidelines.html
+The annotation returns paragraphs, sentences, tokens, the location of the token in the original text, morphology elements like the lemma, the universal part of speech tag and the treebank-specific parts of speech tag, morphosyntactic features and returns as well the dependency relationship. More information at https://universaldependencies.org/guidelines.html
 
 ```{r}
 str(x)
@@ -68,5 +68,5 @@ You can check the encoding of your text with `Encoding('your text')`. You can co
 
 
 ```{r, results='hide', echo=FALSE}
-invisible(if(file.exists("dutch-alpino-ud-2.4-190531.udpipe")) file.remove("dutch-alpino-ud-2.4-190531.udpipe"))
+invisible(if(file.exists(udmodel$file)) file.remove(udmodel$file))
 ```

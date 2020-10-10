@@ -4,8 +4,13 @@
 \alias{udpipe_accuracy}
 \title{Evaluate the accuracy of your UDPipe model on holdout data}
 \usage{
-udpipe_accuracy(object, file_conllu, tokenizer = c("default", "none"),
-  tagger = c("default", "none"), parser = c("default", "none"))
+udpipe_accuracy(
+  object,
+  file_conllu,
+  tokenizer = c("default", "none"),
+  tagger = c("default", "none"),
+  parser = c("default", "none")
+)
 }
 \arguments{
 \item{object}{an object of class \code{udpipe_model} as returned by \code{\link{udpipe_load_model}}}
@@ -54,7 +59,7 @@ if(file.exists(model$file_model)) file.remove(model$file_model)
 }
 \references{
 \url{https://ufal.mff.cuni.cz/udpipe}, 
-\url{http://universaldependencies.org/format.html}
+\url{https://universaldependencies.org/format.html}
 }
 \seealso{
 \code{\link{udpipe_load_model}}

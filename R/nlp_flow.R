@@ -485,7 +485,7 @@ dtm_remove_terms <- function(dtm, terms, remove_emptydocs = TRUE){
 #' @title Pearson Correlation for Sparse Matrices
 #' @description Pearson Correlation for Sparse Matrices. 
 #' More memory and time-efficient than \code{cor(as.matrix(x))}. 
-#' @param x A matrix, potentially a sparse matrix such as a "dgTMatrix" object 
+#' @param x A matrix, potentially a sparse matrix such as a "dgCMatrix" object 
 #' which is returned by \code{\link{document_term_matrix}}
 #' @return a correlation matrix 
 #' @seealso \code{\link{document_term_matrix}}
@@ -513,8 +513,8 @@ dtm_cor <- function(x) {
 #' If there are missing rows these will be filled with NA values. \cr
 #' In case of \code{dtm_rbind}, if the columns are not ordered in the same way in x and y, it will order them based on the colnames. 
 #' If there are missing columns these will be filled with NA values.
-#' @param x a sparse matrix such as a "dgTMatrix" object which is returned by \code{\link{document_term_matrix}}
-#' @param y a sparse matrix such as a "dgTMatrix" object which is returned by \code{\link{document_term_matrix}}
+#' @param x a sparse matrix such as a "dgCMatrix" object which is returned by \code{\link{document_term_matrix}}
+#' @param y a sparse matrix such as a "dgCMatrix" object which is returned by \code{\link{document_term_matrix}}
 #' @return a sparse matrix where either rows are put below each other in case of \code{dtm_rbind}
 #' or columns are put next to each other in case of \code{dtm_cbind}
 #' @seealso \code{\link{document_term_matrix}}
@@ -618,4 +618,412 @@ dtm_colsums <- function(dtm){
 #' @rdname dtm_colsums
 dtm_rowsums <- function(dtm){
   Matrix::rowSums(dtm)
+}
+
+
+
+
+#' @title Compare term usage across 2 document groups using the Chi-square Test for Count Data
+#' @description Perform a \code{\link{chisq.test}} to compare if groups of documents have more prevalence of specific terms.\cr
+#' The function looks to each term in the document term matrix and applies a \code{\link{chisq.test}} comparing the frequency 
+#' of occurrence of each term compared to the other terms in the document group.
+#' @param dtm a document term matrix: an object returned by \code{\link{document_term_matrix}}
+#' @param groups a logical vector with 2 groups (TRUE / FALSE) where the size of the \code{groups} vector 
+#' is the same as the number of rows of \code{dtm} and where element i corresponds row i of \code{dtm}
+#' @param correct passed on to \code{\link{chisq.test}}
+#' @param ... further arguments passed on to \code{\link{chisq.test}}
+#' @export
+#' @return a data.frame with columns term, chisq, p.value, freq, freq_true, freq_false indicating for each term in the \code{dtm},
+#' how frequently it occurs in each group, the Chi-Square value and it's corresponding p-value.
+#' @examples 
+#' data(brussels_reviews_anno)
+#' ##
+#' ## Which nouns occur in text containing the term 'centre'
+#' ##
+#' x <- subset(brussels_reviews_anno, xpos == "NN" & language == "fr")
+#' x <- x[, c("doc_id", "lemma")]
+#' x <- document_term_frequencies(x)
+#' dtm <- document_term_matrix(x)
+#' relevant <- dtm_chisq(dtm, groups = dtm[, "centre"] > 0)
+#' head(relevant, 10)
+#' 
+#' ##
+#' ## Which adjectives occur in text containing the term 'hote'
+#' ##
+#' x <- subset(brussels_reviews_anno, xpos == "JJ" & language == "fr")
+#' x <- x[, c("doc_id", "lemma")]
+#' x <- document_term_frequencies(x)
+#' dtm <- document_term_matrix(x)
+#' 
+#' group <- subset(brussels_reviews_anno, lemma %in% "hote")
+#' group <- rownames(dtm) %in% group$doc_id
+#' relevant <- dtm_chisq(dtm, groups = group)
+#' head(relevant, 10)
+#' 
+#' 
+#' \dontrun{
+#' # do not show scientific notation of the p-values
+#' options(scipen = 100)
+#' head(relevant, 10)
+#' }
+dtm_chisq <- function(dtm, groups, correct = TRUE, ...){
+  stopifnot(is.logical(groups))
+  stopifnot(length(unique(groups)) == 2)
+  stopifnot(length(groups) == nrow(dtm))
+  recode <- function(x, from, to){
+    to[match(x, from)]
+  }
+  
+  DTM <- dtm_reverse(dtm)
+  DTM <- data.frame(doc_id = recode(DTM$doc_id, from = rownames(dtm), to = groups), 
+                    term = DTM$term, 
+                    freq = DTM$freq, stringsAsFactors = FALSE)
+  DTM <- document_term_frequencies(DTM)
+  DTM <- document_term_matrix(DTM)
+  
+  freq_true  <- DTM["TRUE" , , drop = TRUE]
+  freq_false <- DTM["FALSE", , drop = TRUE]
+  
+  contingencies <- data.frame(term = colnames(DTM), 
+                              term_freq_true  = freq_true, 
+                              term_freq_false = freq_false,
+                              otherterms_freq_true  = sum(freq_true) - freq_true, 
+                              otherterms_freq_flase = sum(freq_false) - freq_false, 
+                              stringsAsFactors = FALSE)
+  result <- mapply(term = contingencies$term, 
+                   a = contingencies$term_freq_true, b = contingencies$term_freq_false, 
+                   c = contingencies$otherterms_freq_true, d = contingencies$otherterms_freq_flase, 
+                   FUN = function(term, a, b, c, d){
+                     tab <- matrix(c(a, b, c, d), nrow = 2, ncol = 2, byrow = TRUE)
+                     suppressWarnings(result <- chisq.test(tab, correct = correct, ...))
+                     list(term = term,
+                          chisq = result$statistic, 
+                          p.value = result$p.value,
+                          freq = a + b,
+                          freq_true = a, 
+                          freq_false = b)
+                   }, SIMPLIFY = FALSE)
+  result <- data.table::rbindlist(result)
+  result <- result[order(result$chisq, decreasing = TRUE), ]
+  result <- data.table::setDF(result)
+  result
+}
+
+
+
+#' @title Make sure a document term matrix has exactly the specified rows and columns
+#' @description Makes sure the document term matrix has exactly the rows and columns which you specify. If missing rows or columns
+#' are occurring, the function fills these up either with empty cells or with the value that you provide. See the examples.
+#' @param dtm a document term matrix: an object returned by \code{\link{document_term_matrix}}
+#' @param rows a character vector of row names which \code{dtm} should have
+#' @param columns a character vector of column names which \code{dtm} should have
+#' @param fill a value to use to fill up missing rows / columns. Defaults to using an empty cell.
+#' @return the sparse matrix \code{dtm} with exactly the specified rows and columns
+#' @export
+#' @seealso \code{\link{document_term_matrix}}
+#' @examples 
+#' x <- data.frame(doc_id = c("doc_1", "doc_1", "doc_1", "doc_2"), 
+#'                 text = c("a", "a", "b", "c"), 
+#'                 stringsAsFactors = FALSE)
+#' dtm <- document_term_frequencies(x)
+#' dtm <- document_term_matrix(dtm)
+#' dtm
+#' dtm_conform(dtm, 
+#'             rows = c("doc_1", "doc_2", "doc_3"), columns = c("a", "b", "c", "Z", "Y"))
+#' dtm_conform(dtm, 
+#'             rows = c("doc_1", "doc_2", "doc_3"), columns = c("a", "b", "c", "Z", "Y"), 
+#'             fill = 1)
+#' dtm_conform(dtm, rows = c("doc_1", "doc_3"), columns = c("a", "b", "c", "Z", "Y"))
+#' dtm_conform(dtm, columns = c("a", "b", "Z"))
+#' dtm_conform(dtm, rows = c("doc_1"))
+#' dtm_conform(dtm, rows = character())
+#' dtm_conform(dtm, columns = character())
+#' dtm_conform(dtm, rows = character(), columns = character())
+#' 
+#' ##
+#' ## Some examples on border line cases
+#' ##
+#' special1 <- dtm[, character()]
+#' special2 <- dtm[character(), character()]
+#' special3 <- dtm[character(), ]
+#' 
+#' dtm_conform(special1, 
+#'             rows = c("doc_1", "doc_2", "doc_3"), columns = c("a", "b", "c", "Z", "Y"))
+#' dtm_conform(special1, 
+#'             rows = c("doc_1", "doc_2", "doc_3"), columns = c("a", "b", "c", "Z", "Y"), 
+#'             fill = 1)
+#' dtm_conform(special1, rows = c("doc_1", "doc_3"), columns = c("a", "b", "c", "Z", "Y"))
+#' dtm_conform(special1, columns = c("a", "b", "Z"))
+#' dtm_conform(special1, rows = c("doc_1"))
+#' dtm_conform(special1, rows = character())
+#' dtm_conform(special1, columns = character())
+#' dtm_conform(special1, rows = character(), columns = character())
+#' 
+#' dtm_conform(special2, 
+#'             rows = c("doc_1", "doc_2", "doc_3"), columns = c("a", "b", "c", "Z", "Y"))
+#' dtm_conform(special2, 
+#'             rows = c("doc_1", "doc_2", "doc_3"), columns = c("a", "b", "c", "Z", "Y"), 
+#'             fill = 1)
+#' dtm_conform(special2, rows = c("doc_1", "doc_3"), columns = c("a", "b", "c", "Z", "Y"))
+#' dtm_conform(special2, columns = c("a", "b", "Z"))
+#' dtm_conform(special2, rows = c("doc_1"))
+#' dtm_conform(special2, rows = character())
+#' dtm_conform(special2, columns = character())
+#' dtm_conform(special2, rows = character(), columns = character())
+#' 
+#' dtm_conform(special3, 
+#'             rows = c("doc_1", "doc_2", "doc_3"), columns = c("a", "b", "c", "Z", "Y"))
+#' dtm_conform(special3, 
+#'             rows = c("doc_1", "doc_2", "doc_3"), columns = c("a", "b", "c", "Z", "Y"), 
+#'             fill = 1)
+#' dtm_conform(special3, rows = c("doc_1", "doc_3"), columns = c("a", "b", "c", "Z", "Y"))
+#' dtm_conform(special3, columns = c("a", "b", "Z"))
+#' dtm_conform(special3, rows = c("doc_1"))
+#' dtm_conform(special3, rows = character())
+#' dtm_conform(special3, columns = character())
+#' dtm_conform(special3, rows = character(), columns = character())
+dtm_conform <- function(dtm, rows, columns, fill){
+  if(!missing(columns)){
+    missing_terms <- setdiff(columns, colnames(dtm))
+    if(length(missing_terms)){
+      if(!missing(fill)){
+        extra <- expand.grid(i = seq_len(nrow(dtm)), j = length(missing_terms))
+        extra <- Matrix::sparseMatrix(dims = c(nrow(dtm), length(missing_terms)), dimnames = list(rownames(dtm), missing_terms), i = extra$i, j = extra$j, x = fill)
+      }else{
+        extra <- Matrix::sparseMatrix(dims = c(nrow(dtm), length(missing_terms)), dimnames = list(rownames(dtm), missing_terms), i = {}, j = {})  
+      }
+      if(nrow(dtm) == 0){
+        dtm <- methods::cbind2(dtm, extra)  
+      }else{
+        dtm <- dtm_cbind(dtm, extra)
+      }
+    }  
+  }
+  if(!missing(rows)){
+    missing_docs <- setdiff(rows, rownames(dtm))
+    if(length(missing_docs) > 0){
+      if(!missing(fill)){
+        extra <- expand.grid(i = seq_len(length(missing_docs)), j = ncol(dtm))
+        extra <- Matrix::sparseMatrix(dims = c(length(missing_docs), ncol(dtm)), dimnames = list(missing_docs, colnames(dtm)), i = extra$i, j = extra$j, x = fill)
+      }else{
+        extra <- Matrix::sparseMatrix(dims = c(length(missing_docs), ncol(dtm)), dimnames = list(missing_docs, colnames(dtm)), i = {}, j = {})
+      }
+      if(ncol(dtm) == 0){
+        dtm <- methods::rbind2(dtm, extra)  
+      }else{
+        dtm <- udpipe::dtm_rbind(dtm, extra)  
+      }
+    }  
+  }
+  if(!missing(rows) & !missing(columns)){
+    dtm <- dtm[rows, columns, drop = FALSE]  
+  }else if(!missing(rows)){
+    dtm <- dtm[rows, , drop = FALSE]  
+  }else if(!missing(columns)){
+    dtm <- dtm[, columns, drop = FALSE]  
+  }
+  dtm
+}
+
+
+
+#' @title Semantic Similarity to a Singular Value Decomposition
+#' @description Calculate the similarity of a document term matrix to a set of terms based on 
+#' a Singular Value Decomposition (SVD) embedding matrix.\cr
+#' This can be used to easily construct a sentiment score based on the latent scale defined by a set of positive or negative terms.
+#' @param dtm a sparse matrix such as a "dgCMatrix" object which is returned by \code{\link{document_term_matrix}} containing frequencies of terms for each document
+#' @param embedding a matrix containing the \code{v} element from an singular value decomposition with the right singular vectors. 
+#' The rownames of that matrix should contain terms which are available in the \code{colnames(dtm)}. See the examples.
+#' @param weights a numeric vector with weights giving your definition of which terms are positive or negative, 
+#' The names of this vector should be terms available in the rownames of the embedding matrix. See the examples.
+#' @param terminology a character vector of terms to limit the calculation of the similarity for the \code{dtm} to the linear combination of the weights. 
+#' Defaults to all terms from the \code{embedding} matrix.
+#' @param type either 'cosine' or 'dot' indicating to respectively calculate cosine similarities or inner product similarities between the \code{dtm} and the SVD embedding space. Defaults to 'cosine'.
+#' @export
+#' @return an object of class 'svd_similarity' which is a list with elements
+#' \itemize{
+#' \item weights: The weights used. These are scaled to sum up to 1 as well on the positive as the negative side
+#' \item type: The type of similarity calculated (either 'cosine' or 'dot')
+#' \item terminology: A data.frame with columns term, freq and similarity where similarity indicates 
+#' the similarity between the term and the SVD embedding space of the weights and freq is how frequently the term occurs in the \code{dtm}. 
+#' This dataset is sorted in descending order by similarity.
+#' \item similarity: A data.frame with columns doc_id and similarity indicating the similarity between
+#' the \code{dtm} and the SVD embedding space of the weights. The doc_id is the identifier taken from the rownames of \code{dtm}.
+#' \item scale: A list with elements terminology and weights 
+#' indicating respectively the similarity in the SVD embedding space
+#' between the \code{terminology} and each of the weights and between the weight terms itself
+#' }
+#' @seealso \url{https://en.wikipedia.org/wiki/Latent_semantic_analysis}
+#' @examples
+#' data("brussels_reviews_anno", package = "udpipe")
+#' x <- subset(brussels_reviews_anno, language %in% "nl" & (upos %in% "ADJ" | lemma %in% "niet"))
+#' dtm <- document_term_frequencies(x, document = "doc_id", term = "lemma")
+#' dtm <- document_term_matrix(dtm)
+#' dtm <- dtm_remove_lowfreq(dtm, minfreq = 3)
+#' 
+#' ## Function performing Singular Value Decomposition on sparse/dense data
+#' dtm_svd <- function(dtm, dim = 5, type = c("RSpectra", "svd"), ...){
+#'   type <- match.arg(type)
+#'   if(type == "svd"){
+#'     SVD <- svd(dtm, nu = 0, nv = dim, ...)
+#'   }else if(type == "RSpectra"){
+#'     #Uncomment this if you want to use the faster sparse SVD by RSpectra
+#'     #SVD <- RSpectra::svds(dtm, nu = 0, k = dim, ...)
+#'   }
+#'   rownames(SVD$v) <- colnames(dtm)
+#'   SVD$v
+#' }
+#' #embedding <- dtm_svd(dtm, dim = 5)
+#' embedding <- dtm_svd(dtm, dim = 5, type = "svd")
+#' 
+#' ## Define positive / negative terms and calculate the similarity to these
+#' weights <- setNames(c(1, 1, 1, 1, -1, -1, -1, -1),
+#'                     c("fantastisch", "schoon", "vriendelijk", "net",
+#'                       "lawaaiig", "lastig", "niet", "slecht"))
+#' scores <- dtm_svd_similarity(dtm, embedding = embedding, weights = weights)
+#' scores
+#' str(scores$similarity)
+#' hist(scores$similarity$similarity)
+#' 
+#' plot(scores$terminology$similarity_weight, log(scores$terminology$freq), 
+#'      type = "n")
+#' text(scores$terminology$similarity_weight, log(scores$terminology$freq), 
+#'      labels = scores$terminology$term)
+dtm_svd_similarity <- function(dtm, embedding, weights, terminology = rownames(embedding), type = c("cosine", "dot")){
+  doc_id <- term <- prop <- in_terminology <- NULL
+  embedding_similarity <- function(x, y, type = c("cosine", "dot")) {
+    if(!is.matrix(x)){
+      x <- matrix(x, nrow = 1)
+    }
+    if(!is.matrix(y)){
+      y <- matrix(y, nrow = 1)
+    }
+    type <- match.arg(type)
+    
+    if(type == "dot"){
+      similarities <- tcrossprod(x, y)
+    }else if(type == "cosine"){
+      normx <- sqrt(rowSums(x^2))
+      normy <- sqrt(rowSums(y^2))
+      similarities <- tcrossprod(x, y) / (normx %o% normy)
+    }
+    similarities
+  }
+  setNames <- function(x, labels){
+    names(x) <- labels
+    x
+  }
+  ##
+  ## DATA CHECKS
+  ##
+  type <- match.arg(type)
+  stopifnot(is.matrix(embedding))
+  stopifnot(is.vector(weights))
+  
+  object <- list(dim = ncol(embedding),
+                 terminology = rownames(embedding),
+                 embedding = as.matrix(embedding))
+  
+  if(missing(terminology)){
+    terminology <- object$terminology
+  }else{
+    terminology <- intersect(terminology, object$terminology)
+  }
+  not_known_weights <- setdiff(names(weights), object$terminology)
+  if(length(not_known_weights) > 0){
+    warning(sprintf("Removing '%s' from weights as these are not part of rownames(embedding)", paste(not_known_weights, collapse = ", ")))
+    weights <- weights[!names(weights) %in% not_known_weights]
+  }
+  stopifnot(length(weights) > 0)
+  if(length(unique(sign(weights))) != 2){
+    stop("weights should contain positive as well as negative values")
+  }
+  
+  ## rescale weights to make sure positive values sum to 1 and negative also sum to -1
+  weights_scaled <- data.frame(term = names(weights), 
+                               weight = weights, 
+                               sign = sign(weights),
+                               stringsAsFactors = FALSE)
+  weights_scaled <- lapply(X = split(weights_scaled, weights_scaled$sign),
+                           FUN = function(x){
+                             x$weight_scaled = x$weight / abs(sum(x$weight))
+                             x
+                           })
+  weights_scaled <- do.call(rbind, weights_scaled)
+  weights_scaled <- setNames(weights_scaled$weight_scaled, weights_scaled$term)
+  #weights_scaled <- setNames(weights_scaled$weight / nrow(weights_scaled), weights_scaled$term)
+  
+  
+  ####################################################################################
+  ## Calculate embedding similarity of terminology to weights, weights-to-weights
+  ## and the embedding space of the linear combination of the weights
+  ##
+  weightsterms <- names(weights_scaled)
+  
+  similarity_terminology_to_weights <- embedding_similarity(
+    object$embedding[terminology, , drop = FALSE],
+    object$embedding[weightsterms, , drop = FALSE],
+    type = type)
+
+  similarity_weights_to_weights <- embedding_similarity(
+    object$embedding[weightsterms, , drop = FALSE],
+    object$embedding[weightsterms, , drop = FALSE],
+    type = type)
+  
+  ## weighted term-to-weights similarity reflecting a scale on which -1 to +1 range lies
+  weightspace <- similarity_terminology_to_weights %*% weights_scaled
+  weightspace <- weightspace[, 1]
+  
+  ##
+  ## Predict (for terms part of the terminology, get the weights embedding space)
+  ##
+  freq <- dtm_colsums(dtm)
+  dtf <- dtm_reverse(dtm)
+  dtf <- data.table::setDT(dtf)
+  dtf <- dtf[, in_terminology := term %in% terminology, ]
+  #dtf <- dtf[, prop := as.numeric(freq / sum(freq)), by = list(doc_id)]
+  dtf <- dtf[, prop := as.numeric(ifelse(any(in_terminology), freq[in_terminology] / sum(freq[in_terminology]), 0)), by = list(doc_id)]
+  dtm <- document_term_matrix(dtf, weight = "prop", terminology = terminology)
+  dtm <- dtm[, terminology, drop = FALSE]
+  
+  scores <- dtm %*% weightspace
+  scores <- scores[, 1]
+  scores <- data.frame(doc_id = names(scores), 
+                       similarity = as.numeric(scores), 
+                       stringsAsFactors = FALSE)
+  
+  terminology_similarity <- sort(weightspace, decreasing = TRUE)
+  terminology_similarity <- data.frame(
+    term = names(terminology_similarity), 
+    freq = txt_recode(names(terminology_similarity), from = names(freq), to = as.integer(freq)),
+    similarity_weight = as.numeric(terminology_similarity),
+    stringsAsFactors = FALSE)
+  
+  result <- list(weights = weights_scaled,
+                 type = type,
+                 terminology = terminology_similarity,
+                 similarity = scores,
+                 scale = list(
+                   terminology = similarity_terminology_to_weights,
+                   weights = similarity_weights_to_weights))
+  class(result) <- "svd_similarity"
+  result
+}
+
+#' @export
+print.svd_similarity <- function(x, n = 7, digits = 2, ...){
+  cat(sprintf("Latent Semantic Scaling using %s similarity on SVD matrix", x$type), sep = "\n")
+  cat(sprintf("Weights: %s", paste(sprintf("%s %s", names(x$weights), round(x$weights, 4)), collapse = ", ")), sep = "\n")
+  cat(sprintf("Top %s most similar terms on the high end of the scale", n), sep = "\n")
+  elements <- head(x$terminology, n = n, sep = "\n")
+  mapply(term = elements$term, freq = elements$freq, similarity = elements$similarity, FUN=function(term, freq, similarity){
+    cat(sprintf(" - %s %s (frequency: %s)", term, round(similarity, digits = digits), freq), sep = "\n")
+  })
+  cat(sprintf("Top %s most similar terms on the low end of the scale", n), sep = "\n")
+  elements <- tail(x$terminology, n = n, sep = "\n")
+  elements <- elements[order(elements$similarity, decreasing = FALSE), ]
+  mapply(term = elements$term, freq = elements$freq, similarity = elements$similarity, FUN=function(term, freq, similarity){
+    cat(sprintf(" - %s %s (frequency: %s)", term, round(similarity, digits = digits), freq), sep = "\n")
+  })
+  invisible()
 }

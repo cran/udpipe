@@ -9,15 +9,15 @@
 #' \code{doc_id[i]} corresponds to \code{x[i]}.
 #' @param tokenizer a character string of length 1, which is either 'tokenizer' (default udpipe tokenisation)
 #' or a character string with more complex tokenisation options 
-#' as specified in \url{http://ufal.mff.cuni.cz/udpipe/users-manual} in which case \code{tokenizer} should be a character string where the options
+#' as specified in \url{http://ufal.mff.cuni.cz/udpipe/1/users-manual} in which case \code{tokenizer} should be a character string where the options
 #' are put after each other using the semicolon as separation.
 #' @param tagger a character string of length 1, which is either 'default' (default udpipe POS tagging and lemmatisation)
 #' or 'none' (no POS tagging and lemmatisation needed) or a character string with more complex tagging options 
-#' as specified in \url{http://ufal.mff.cuni.cz/udpipe/users-manual} in which case \code{tagger} should be a character string where the options
+#' as specified in \url{http://ufal.mff.cuni.cz/udpipe/1/users-manual} in which case \code{tagger} should be a character string where the options
 #' are put after each other using the semicolon as separation.
 #' @param parser a character string of length 1, which is either 'default' (default udpipe dependency parsing) or
 #' 'none' (no dependency parsing needed) or a character string with more complex parsing options 
-#' as specified in \url{http://ufal.mff.cuni.cz/udpipe/users-manual} in which case \code{parser} should be a character string where the options
+#' as specified in \url{http://ufal.mff.cuni.cz/udpipe/1/users-manual} in which case \code{parser} should be a character string where the options
 #' are put after each other using the semicolon as separation.
 #' @param trace A non-negative integer indicating to show progress on the annotation. 
 #' If positive it prints out a message before each \code{trace} number of elements of \code{x} for which annotation is to be executed,
@@ -27,12 +27,12 @@
 #' \itemize{
 #'  \item{x: }{The \code{x} character vector with text.}
 #'  \item{conllu: }{A character vector of length 1 containing the annotated result of the annotation flow in CONLL-U format.
-#'  This format is explained at \url{http://universaldependencies.org/format.html}}
+#'  This format is explained at \url{https://universaldependencies.org/format.html}}
 #'  \item{error: }{A vector with the same length of \code{x} containing possible errors when annotating \code{x}}
 #' }
 #' @seealso \code{\link{udpipe_load_model}}, \code{\link{as.data.frame.udpipe_connlu}}
 #' @references \url{https://ufal.mff.cuni.cz/udpipe}, \url{https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-2364}, 
-#' \url{http://universaldependencies.org/format.html}
+#' \url{https://universaldependencies.org/format.html}
 #' @export
 #' @examples 
 #' model    <- udpipe_download_model(language = "dutch-lassysmall")
@@ -114,10 +114,28 @@ udpipe_annotate <- function(object, x, doc_id = paste("doc", seq_along(x), sep="
     as.character(Sys.time())
   }
   ## Annotate
-  x_conllu <- udp_tokenise_tag_parse(object$model, x, doc_id, tokenizer, tagger, parser, log_every, log_now)
-  Encoding(x_conllu$conllu) <- "UTF-8"
-  class(x_conllu) <- "udpipe_connlu"
-  x_conllu
+  if("basic" %in% names(list(...))){
+    ## Undocumented as not frequently tested up to now
+    x <- mapply(x = x, doc_id = doc_id, FUN = function(x, doc_id, tokenizer, tagger, parser, log_every, log_now){
+      udp_tokenise_tag_parse_basic(object$model, x, doc_id, tokenizer, tagger, parser, log_every, log_now)
+    }, MoreArgs = list(tokenizer = tokenizer, tagger = tagger, parser = parser, log_every = log_every, log_now = log_now), 
+    SIMPLIFY = FALSE)
+    x <- data.table::rbindlist(x)
+    x <- setDF(x)
+    if(nrow(x) > 0){
+      feats <- c("doc_id", "token", "lemma", "upos", "xpos", "feats", "dep_rel", "misc")
+      x[, feats] <- lapply(x[, feats], FUN = function(x){
+        Encoding(x) <- "UTF-8"
+        x
+      })  
+    }
+    x
+  }else{
+    x_conllu <- udp_tokenise_tag_parse(object$model, x, doc_id, tokenizer, tagger, parser, log_every, log_now)
+    Encoding(x_conllu$conllu) <- "UTF-8"
+    class(x_conllu) <- "udpipe_connlu"
+    x_conllu 
+  }
 }
 
 
@@ -132,7 +150,7 @@ udpipe_annotate <- function(object, x, doc_id = paste("doc", seq_along(x), sep="
 #' The columns paragraph_id, sentence_id are integers, the other fields
 #' are character data in UTF-8 encoding. \cr
 #' 
-#' To get more information on these fields, visit \url{http://universaldependencies.org/format.html} 
+#' To get more information on these fields, visit \url{https://universaldependencies.org/format.html} 
 #' or look at \code{\link{udpipe}}.
 #' @seealso \code{\link{udpipe_annotate}}
 #' @export
@@ -313,20 +331,20 @@ read_connlu <- function(x, is_udpipe_annotation = FALSE, ...){
 #'  \item{token_id: }{Token index, integer starting at 1 for each new sentence. May be a range for multiword tokens or a decimal number for empty nodes.}
 #'  \item{token: }{The token.}
 #'  \item{lemma: }{The lemma of the token.}
-#'  \item{upos: }{The universal parts of speech tag of the token. See \url{http://universaldependencies.org/format.html}}
-#'  \item{xpos: }{The treebank-specific parts of speech tag of the token. See \url{http://universaldependencies.org/format.html}}
-#'  \item{feats: }{The morphological features of the token, separated by |. See \url{http://universaldependencies.org/format.html}}
-#'  \item{head_token_id: }{Indicating what is the token_id of the head of the token, indicating to which other token in the sentence it is related. See \url{http://universaldependencies.org/format.html}}
-#'  \item{dep_rel: }{The type of relation the token has with the head_token_id. See \url{http://universaldependencies.org/format.html}}
-#'  \item{deps: }{Enhanced dependency graph in the form of a list of head-deprel pairs. See \url{http://universaldependencies.org/format.html}}
-#'  \item{misc: }{SpacesBefore/SpacesAfter/SpacesInToken spaces before/after/inside the token. Used to reconstruct the original text. See \url{http://ufal.mff.cuni.cz/udpipe/users-manual}}
+#'  \item{upos: }{The universal parts of speech tag of the token. See \url{https://universaldependencies.org/format.html}}
+#'  \item{xpos: }{The treebank-specific parts of speech tag of the token. See \url{https://universaldependencies.org/format.html}}
+#'  \item{feats: }{The morphological features of the token, separated by |. See \url{https://universaldependencies.org/format.html}}
+#'  \item{head_token_id: }{Indicating what is the token_id of the head of the token, indicating to which other token in the sentence it is related. See \url{https://universaldependencies.org/format.html}}
+#'  \item{dep_rel: }{The type of relation the token has with the head_token_id. See \url{https://universaldependencies.org/format.html}}
+#'  \item{deps: }{Enhanced dependency graph in the form of a list of head-deprel pairs. See \url{https://universaldependencies.org/format.html}}
+#'  \item{misc: }{SpacesBefore/SpacesAfter/SpacesInToken spaces before/after/inside the token. Used to reconstruct the original text. See \url{http://ufal.mff.cuni.cz/udpipe/1/users-manual}}
 #' }
 #' The columns paragraph_id, sentence_id, term_id, start, end are integers, the other fields
 #' are character data in UTF-8 encoding. \cr
 #' 
 #' @seealso \code{\link{udpipe_load_model}}, \code{\link{as.data.frame.udpipe_connlu}}, \code{\link{udpipe_download_model}}, \code{\link{udpipe_annotate}}
 #' @references \url{https://ufal.mff.cuni.cz/udpipe}, \url{https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-2364}, 
-#' \url{http://universaldependencies.org/format.html}
+#' \url{https://universaldependencies.org/format.html}
 #' @export
 #' @examples 
 #' model    <- udpipe_download_model(language = "dutch-lassysmall")
@@ -405,7 +423,7 @@ udpipe <- function(x, object, parallel.cores = 1L, parallel.chunksize, ...) {
     if(.Platform$OS.type %in% c("unix")) {
       anno <- parallel::mclapply(anno, 
                                  FUN = function(x, object, parallel.chunksize, ...){
-                                   udpipe(x, object, parallel.cores = 1, parallel.chunksize = parallel.chunksize, ...) 
+                                   udpipe::udpipe(x, object, parallel.cores = 1, parallel.chunksize = parallel.chunksize, ...) 
                                  }, 
                                  object = object,
                                  parallel.chunksize = parallel.chunksize, 
@@ -417,7 +435,7 @@ udpipe <- function(x, object, parallel.cores = 1L, parallel.chunksize, ...) {
       anno <- parallel::parLapply(cl = cl, 
                                   X = anno, 
                                   fun = function(x, object, parallel.chunksize, ...){
-                                    udpipe(x, object, parallel.cores = 1, parallel.chunksize = parallel.chunksize,...) 
+                                    udpipe::udpipe(x, object, parallel.cores = 1, parallel.chunksize = parallel.chunksize,...) 
                                   }, object = object, parallel.chunksize = parallel.chunksize, ...)
       
     }else{
@@ -466,7 +484,9 @@ udpipe.character <- function(x, object, ...){
   }else{
     x <- udpipe_annotate(udmodel, x = x, doc_id = names(x), ...)
   }
-  x <- as.data.frame(x, detailed = TRUE)
+  if(inherits(x, "udpipe_connlu")){
+    x <- as.data.frame(x, detailed = TRUE)  
+  }
   x
 }
 
@@ -475,7 +495,9 @@ udpipe.data.frame <- function(x, object, ...){
   udmodel <- getmodel(object, ...)
   stopifnot(all(c("doc_id", "text") %in% colnames(x)))
   x <- udpipe_annotate(udmodel, x = x$text, doc_id = x$doc_id, ...)
-  x <- as.data.frame(x, detailed = TRUE)
+  if(inherits(x, "udpipe_connlu")){
+    x <- as.data.frame(x, detailed = TRUE)  
+  }
   x
 }
 
@@ -486,5 +508,10 @@ udpipe.list <- function(x, object, ...){
   x <- udpipe_annotate(udmodel, 
                        x = sapply(x, FUN=function(x) paste(x, collapse = "\n")), 
                        doc_id = names(x), tokenizer = "vertical", ...)
-  x <- as.data.frame(x, detailed = TRUE)
+  if(inherits(x, "udpipe_connlu")){
+    x <- as.data.frame(x, detailed = TRUE) 
+  }
+  x
 }
+
+

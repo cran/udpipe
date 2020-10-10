@@ -4,7 +4,6 @@
 \alias{dtm_bind}
 \alias{dtm_cbind}
 \alias{dtm_rbind}
-\alias{dtm_rbind}
 \title{Combine 2 document term matrices either by rows or by columns}
 \usage{
 dtm_cbind(x, y)
@@ -12,9 +11,9 @@ dtm_cbind(x, y)
 dtm_rbind(x, y)
 }
 \arguments{
-\item{x}{a sparse matrix such as a "dgTMatrix" object which is returned by \code{\link{document_term_matrix}}}
+\item{x}{a sparse matrix such as a "dgCMatrix" object which is returned by \code{\link{document_term_matrix}}}
 
-\item{y}{a sparse matrix such as a "dgTMatrix" object which is returned by \code{\link{document_term_matrix}}}
+\item{y}{a sparse matrix such as a "dgCMatrix" object which is returned by \code{\link{document_term_matrix}}}
 }
 \value{
 a sparse matrix where either rows are put below each other in case of \code{dtm_rbind}

@@ -1,3 +1,23 @@
+## CHANGES IN udpipe VERSION 0.8.4
+
+- Update to UDPipe 1.2.1 (28 Sep 2018) 
+    - this adds segment_size and learning_rate_final parameters to tokenizer training
+    - correctly set SpaceAfter for last token when normalizing spaces.
+- Default of udpipe_download_model is now changed, downloads now models built on Universal Dependencies 2.5 instead of the models build on Universal Dependencies 2.4
+- Added txt_count
+- Added txt_overlap
+- Added dtm_conform
+- Added dtm_chisq
+- Added dtm_svd_similarity
+- Added as_fasttext
+- Added unlist_tokens
+- txt_recode_ngram now also works gracefully in case ngram is set to 1 although the intention is not to use it when ngram is set to 1
+- Experimental changes regarding cbind_dependencies which might change in a subsequent release.
+  - cbind_dependencies now has been implementend for type 'child'. 
+  - cbind_dependencies now allows to add row numbers of the parent or children where the token is linked to using the dependency parsing output. 
+- Experimental and unfinished work on allowing to easily query dependency relations
+
+
 ## CHANGES IN udpipe VERSION 0.8.3
 
 - Default of udpipe_download_model is now changed, downloads now models built on Universal Dependencies 2.4 instead of the models build on Universal Dependencies 2.3

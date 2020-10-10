@@ -82,8 +82,12 @@ txt_recode <- function(x, from = c(), to = c()){
   nongiven <- setdiff(nongiven, from)
   if(length(nongiven) > 0) {
     from <- append(x = from, values = nongiven)
-    to <- append(x = to, values = nongiven)
+    to   <- append(x = to, values = nongiven)
   }
+  to[match(x, from)]
+}
+
+recode <- function(x, from, to){
   to[match(x, from)]
 }
 
@@ -363,9 +367,16 @@ txt_recode_ngram <- function(x, compound, ngram, sep = " "){
     ## Overwrite word with bigram/trigram/n-gram
     x[idx] <- y[idx]
     ## Set the next values to NA
-    for(i in 1:(ngram - 1)){
-      x[idx + i] <- NA_character_
-    }  
+    size <- length(x)
+    if(ngram > 1){
+      for (i in 1:(ngram - 1)) {
+        loc <- idx + i
+        loc <- loc[loc <= size]
+        if(length(loc) > 0){
+          x[loc] <- NA_character_
+        }
+      }
+    }
   }
   x
 }
@@ -521,6 +532,47 @@ txt_contains <- function(x, patterns, value = FALSE, ignore.case = TRUE, ...){
   result
 }
 
+
+#' @title Count the number of times a pattern is occurring in text
+#' @description Count the number of times a pattern is occurring in text. 
+#' Pattern counting is performed by executing a regular expression using \code{\link{gregexpr}} and 
+#' checking how many times the regular expression occurs.
+#' @param x a character vector with text
+#' @param pattern a text pattern which might be contained in \code{x}
+#' @param ... other arguments, passed on to \code{\link{gregexpr}}
+#' @return an integer vector of the same length as \code{x} indicating how many times the pattern is occurring in \code{x}
+#' @export
+#' @examples 
+#' x <- c("abracadabra", "ababcdab")
+#' txt_count(x, pattern = "ab")
+#' txt_count(x, pattern = "AB", ignore.case = TRUE)
+#' txt_count(x, pattern = "AB", ignore.case = FALSE)
+txt_count <- function(x, pattern, ...){
+  result <- gregexpr(pattern = pattern, text = x, ...)
+  sapply(result, FUN = function(x){
+    if(length(x) == 1 && x < 0){
+      0L
+    }else{
+      length(x)
+    }
+  }, USE.NAMES = FALSE)
+}
+
+#' @title Get the overlap between 2 vectors
+#' @description Get the overlap between 2 vectors
+#' @param x a vector
+#' @param y a vector
+#' @return a vector with elements of \code{x} which are also found in \code{y}
+#' @export
+#' @examples 
+#' x <- c("a", "b", "c")
+#' y <- c("b", "c", "e", "z")
+#' txt_overlap(x, y)
+#' txt_overlap(y, x)
+txt_overlap <- function(x, y){
+  y[match(x, y, nomatch = 0L)]
+}
+
 #' @title Create a unique identifier for each combination of fields in a data frame
 #' @description Create a unique identifier for each combination of fields in a data frame. 
 #' This unique identifier is unique for each combination of the elements of the fields. 
@@ -635,5 +687,34 @@ strsplit.data.frame <- function(data, term, group, split = "[[:space:][:punct:][
     terms
   }), by = group, .SDcols = term]
   x <- data.table::setDF(x)
+  x
+}
+
+
+#' @title Create a data.frame from a list of tokens
+#' @description Create a data.frame from a list of tokens. 
+#' @param x a list where the list elements are character vectors of tokens
+#' @return the data of \code{x} converted to a data.frame.
+#' This data.frame has columns doc_id and token where the doc_id is taken from the list names of x
+#' and token contains the data of \code{x}
+#' @export
+#' @examples 
+#' x <- setNames(c("some text here", "hi  there understand this?"), c("a", "b"))
+#' x <- strsplit(x, split = " ")
+#' x
+#' unlist_tokens(x)
+unlist_tokens <- function(x){
+  stopifnot(is.list(x))
+  doc_id <- rep(x = names(x), times = sapply(x, length))
+  token  <- unlist(x, use.names = FALSE, recursive = FALSE)
+  if(length(token) == 0){
+    x <- data.frame(doc_id = character(), 
+                    token = character(), 
+                    stringsAsFactors = FALSE)
+  }else{
+    x <- data.frame(doc_id = doc_id, 
+                    token = token, 
+                    stringsAsFactors = FALSE)  
+  }
   x
 }

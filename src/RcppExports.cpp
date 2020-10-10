@@ -5,6 +5,19 @@
 
 using namespace Rcpp;
 
+// dependency_rowlocations
+Rcpp::List dependency_rowlocations(const unsigned int& row, const Rcpp::List& x, const int depth);
+RcppExport SEXP _udpipe_dependency_rowlocations(SEXP rowSEXP, SEXP xSEXP, SEXP depthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const unsigned int& >::type row(rowSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const int >::type depth(depthSEXP);
+    rcpp_result_gen = Rcpp::wrap(dependency_rowlocations(row, x, depth));
+    return rcpp_result_gen;
+END_RCPP
+}
 // phrases_regex_locate
 Rcpp::List phrases_regex_locate(Rcpp::StringVector x, std::string pattern, int ngram_max);
 RcppExport SEXP _udpipe_phrases_regex_locate(SEXP xSEXP, SEXP patternSEXP, SEXP ngram_maxSEXP) {
@@ -30,8 +43,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // udp_tokenise_tag_parse
-Rcpp::List udp_tokenise_tag_parse(SEXP udmodel, Rcpp::StringVector x, Rcpp::StringVector docid, std::string annotation_tokenizer, std::string annotation_tagger, std::string annotation_parser, int log_every, Rcpp::Function current_time);
-RcppExport SEXP _udpipe_udp_tokenise_tag_parse(SEXP udmodelSEXP, SEXP xSEXP, SEXP docidSEXP, SEXP annotation_tokenizerSEXP, SEXP annotation_taggerSEXP, SEXP annotation_parserSEXP, SEXP log_everySEXP, SEXP current_timeSEXP) {
+Rcpp::List udp_tokenise_tag_parse(SEXP udmodel, Rcpp::StringVector x, Rcpp::StringVector docid, std::string annotation_tokenizer, std::string annotation_tagger, std::string annotation_parser, int log_every, Rcpp::Function current_time, std::string output_format);
+RcppExport SEXP _udpipe_udp_tokenise_tag_parse(SEXP udmodelSEXP, SEXP xSEXP, SEXP docidSEXP, SEXP annotation_tokenizerSEXP, SEXP annotation_taggerSEXP, SEXP annotation_parserSEXP, SEXP log_everySEXP, SEXP current_timeSEXP, SEXP output_formatSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -43,7 +56,26 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type annotation_parser(annotation_parserSEXP);
     Rcpp::traits::input_parameter< int >::type log_every(log_everySEXP);
     Rcpp::traits::input_parameter< Rcpp::Function >::type current_time(current_timeSEXP);
-    rcpp_result_gen = Rcpp::wrap(udp_tokenise_tag_parse(udmodel, x, docid, annotation_tokenizer, annotation_tagger, annotation_parser, log_every, current_time));
+    Rcpp::traits::input_parameter< std::string >::type output_format(output_formatSEXP);
+    rcpp_result_gen = Rcpp::wrap(udp_tokenise_tag_parse(udmodel, x, docid, annotation_tokenizer, annotation_tagger, annotation_parser, log_every, current_time, output_format));
+    return rcpp_result_gen;
+END_RCPP
+}
+// udp_tokenise_tag_parse_basic
+Rcpp::List udp_tokenise_tag_parse_basic(SEXP udmodel, Rcpp::StringVector x, Rcpp::StringVector docid, std::string annotation_tokenizer, std::string annotation_tagger, std::string annotation_parser, int log_every, Rcpp::Function current_time);
+RcppExport SEXP _udpipe_udp_tokenise_tag_parse_basic(SEXP udmodelSEXP, SEXP xSEXP, SEXP docidSEXP, SEXP annotation_tokenizerSEXP, SEXP annotation_taggerSEXP, SEXP annotation_parserSEXP, SEXP log_everySEXP, SEXP current_timeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type udmodel(udmodelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::StringVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::StringVector >::type docid(docidSEXP);
+    Rcpp::traits::input_parameter< std::string >::type annotation_tokenizer(annotation_tokenizerSEXP);
+    Rcpp::traits::input_parameter< std::string >::type annotation_tagger(annotation_taggerSEXP);
+    Rcpp::traits::input_parameter< std::string >::type annotation_parser(annotation_parserSEXP);
+    Rcpp::traits::input_parameter< int >::type log_every(log_everySEXP);
+    Rcpp::traits::input_parameter< Rcpp::Function >::type current_time(current_timeSEXP);
+    rcpp_result_gen = Rcpp::wrap(udp_tokenise_tag_parse_basic(udmodel, x, docid, annotation_tokenizer, annotation_tagger, annotation_parser, log_every, current_time));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -92,9 +124,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_udpipe_dependency_rowlocations", (DL_FUNC) &_udpipe_dependency_rowlocations, 3},
     {"_udpipe_phrases_regex_locate", (DL_FUNC) &_udpipe_phrases_regex_locate, 3},
     {"_udpipe_udp_load_model", (DL_FUNC) &_udpipe_udp_load_model, 1},
-    {"_udpipe_udp_tokenise_tag_parse", (DL_FUNC) &_udpipe_udp_tokenise_tag_parse, 8},
+    {"_udpipe_udp_tokenise_tag_parse", (DL_FUNC) &_udpipe_udp_tokenise_tag_parse, 9},
+    {"_udpipe_udp_tokenise_tag_parse_basic", (DL_FUNC) &_udpipe_udp_tokenise_tag_parse_basic, 8},
     {"_udpipe_na_locf", (DL_FUNC) &_udpipe_na_locf, 1},
     {"_udpipe_udp_train", (DL_FUNC) &_udpipe_udp_train, 6},
     {"_udpipe_udp_evaluate", (DL_FUNC) &_udpipe_udp_evaluate, 6},

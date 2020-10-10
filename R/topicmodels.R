@@ -27,7 +27,7 @@
 #'  \item{n case of type = 'terms': }{a list of data.frames with columns term and prob, 
 #'  giving the posterior probability that each term is emitted by the topic}
 #' }
-#' @S3method predict LDA_VEM
+#' @export
 #' @rdname predict.LDA
 #' @aliases predict.LDA
 #' @seealso \code{\link[topicmodels]{posterior-methods}}
@@ -138,6 +138,6 @@ predict.LDA_VEM <- function(object, newdata, type = c("topics", "terms"), min_po
   result
 }
 
-#' @S3method predict LDA_Gibbs
+#' @export
 #' @rdname predict.LDA
 predict.LDA_Gibbs <- predict.LDA_VEM
