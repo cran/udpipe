@@ -2,7 +2,7 @@ Package: udpipe
 Type: Package
 Title: Tokenization, Parts of Speech Tagging, Lemmatization and
         Dependency Parsing with the 'UDPipe' 'NLP' Toolkit
-Version: 0.8.4
+Version: 0.8.4-1
 Maintainer: Jan Wijffels <jwijffels@bnosac.be>
 Authors@R: c(
     person('Jan', 'Wijffels', role = c('aut', 'cre', 'cph'), email = 'jwijffels@bnosac.be'), 
@@ -26,7 +26,7 @@ Description: This natural language processing toolkit provides language-agnostic
     sentiment scoring and semantic similarity analysis.
 License: MPL-2.0
 URL: https://bnosac.github.io/udpipe/en/index.html,
-        https://github.com/bnosac/ udpipe
+        https://github.com/bnosac/udpipe
 Encoding: UTF-8
 Depends: R (>= 2.10)
 Imports: Rcpp (>= 0.11.5), data.table (>= 1.9.6), Matrix, methods,
@@ -36,7 +36,7 @@ VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, topicmodels, lattice, parallel
 RoxygenNote: 7.1.1
 NeedsCompilation: yes
-Packaged: 2020-10-09 18:08:56 UTC; Jan
+Packaged: 2020-10-11 10:27:30 UTC; Jan
 Author: Jan Wijffels [aut, cre, cph],
   BNOSAC [cph],
   Institute of Formal and Applied Linguistics, Faculty of Mathematics and
@@ -44,4 +44,4 @@ Author: Jan Wijffels [aut, cre, cph],
   Milan Straka [ctb, cph],
   Jana Straková [ctb, cph]
 Repository: CRAN
-Date/Publication: 2020-10-10 06:30:02 UTC
+Date/Publication: 2020-10-12 04:40:02 UTC
