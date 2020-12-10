@@ -146,9 +146,15 @@ document_term_frequencies_statistics <- function(x, k = 1.2, b = 0.75){
 
 
 
-#' @title Create a document/term matrix from a data.frame with 1 row per document/term
-#' @description Create a document/term matrix from a data.frame with 1 row per document/term as returned
-#' by \code{\link{document_term_frequencies}}
+#' @title Create a document/term matrix 
+#' @description Create a document/term matrix from either
+#' \itemize{
+#' \item a data.frame with 1 row per document/term as returned by \code{\link{document_term_frequencies}}
+#' \item a list of tokens from e.g. from package sentencepiece, tokenizers.bpe or just by using strsplit
+#' \item an object of class DocumentTermMatrix or TermDocumentMatrix from the tm package
+#' \item an object of class simple_triplet_matrix from the slam package
+#' \item a regular dense matrix
+#' }
 #' @param x a data.frame with columns doc_id, term and freq indicating how many times a term occurred in that specific document. This is what \code{\link{document_term_frequencies}} returns.\cr
 #' This data.frame will be reshaped to a matrix with 1 row per doc_id, the terms will be put 
 #' in the columns and the freq in the matrix cells. Note that the column name to use for freq can be set in the \code{weight} argument.
@@ -178,11 +184,26 @@ document_term_frequencies_statistics <- function(x, k = 1.2, b = 0.75){
 #' dtm <- document_term_matrix(x, weight = "freq")
 #' dtm <- document_term_matrix(x, weight = "tf_idf")
 #' dtm <- document_term_matrix(x, weight = "bm25")
-#' 
+#' x <- split(brussels_reviews_anno$lemma, brussels_reviews_anno$doc_id)
+#' dtm <- document_term_matrix(x)
 #' ## example showing the vocubulary argument
 #' ## allowing you to making sure terms which are not in the data are provided in the resulting dtm
 #' allterms <- unique(x$term)
 #' dtm <- document_term_matrix(head(x, 1000), vocabulary = allterms)
+#' 
+#' ## example for a list of tokens
+#' x <- list(doc1 = c("aa", "bb", "cc", "aa", "b"), 
+#'           doc2 = c("bb", "bb", "dd", ""), 
+#'           doc3 = character(),
+#'           doc4 = c("cc", NA), 
+#'           doc5 = character())
+#' document_term_matrix(x)
+#' dtm <- document_term_matrix(x, vocabulary = c("a", "bb", "cc"))
+#' dtm <- dtm_conform(dtm, rows = c("doc1", "doc2", "doc7"), columns = c("a", "bb", "cc"))
+#' data(brussels_reviews)
+#' x <- strsplit(setNames(brussels_reviews$feedback, brussels_reviews$id), split = " +")
+#' x <- document_term_matrix(x)
+#' 
 #' 
 #' ##
 #' ## Example adding bigrams/trigrams to the document term matrix
@@ -196,6 +217,36 @@ document_term_frequencies_statistics <- function(x, k = 1.2, b = 0.75){
 #'                                document = "doc_id", 
 #'                                term = c("token", "token_bigram", "token_trigram"))
 #' dtm <- document_term_matrix(x)
+#' 
+#' ##
+#' ## Convert dense matrix to sparse matrix
+#' ##
+#' x <- matrix(c(0, 0, 0, 1, NA, 3, 4, 5, 6, 7), nrow = 2)
+#' x
+#' dtm <- document_term_matrix(x)
+#' dtm
+#' 
+#' ##
+#' ## Convert vectors to sparse matrices
+#' ##
+#' x   <- setNames(-3:3, c("a", "b", "c", "d", "e", "f"))
+#' dtm <- document_term_matrix(x)
+#' dtm
+#' x   <- setNames(runif(6), c("a", "b", "c", "d", "e", "f"))
+#' dtm <- document_term_matrix(x)
+#' dtm
+#' 
+#' ##
+#' ## Convert lists to sparse matrices
+#' ##
+#' x   <- list(a = c("some", "set", "of", "words"), 
+#'             b1 = NA,
+#'             b2 = NA,  
+#'             c1 = character(),
+#'             c2 = 0,  
+#'             d = c("words", "words", "words"))
+#' dtm <- document_term_matrix(x)
+#' dtm
 document_term_matrix <- function(x, vocabulary, weight = "freq", ...){
   UseMethod("document_term_matrix")
 }
@@ -226,6 +277,73 @@ document_term_matrix.data.frame <- function(x, vocabulary, weight = "freq", ...)
                       dimnames = list(doclabels, termlabels))
   dtm
 }
+
+
+#' @describeIn document_term_matrix Construct a sparse document term matrix from a matrix
+#' @export
+document_term_matrix.matrix <- function(x, ...){
+  x <- as(x, "dgCMatrix")
+  x
+}
+
+#' @describeIn document_term_matrix Construct a sparse document term matrix from an named integer vector
+#' @export
+document_term_matrix.integer <- function(x, ...){
+  if(anyDuplicated(names(x))){
+    stop("x has duplicate names")
+  }
+  x <- as.matrix(x)
+  x <- document_term_matrix.matrix(x)
+  x
+}
+
+#' @describeIn document_term_matrix Construct a sparse document term matrix from a named numeric vector
+#' @export
+document_term_matrix.numeric <- function(x, ...){
+  if(anyDuplicated(names(x))){
+    stop("x has duplicate names")
+  }
+  x <- as.matrix(x)
+  x <- document_term_matrix.matrix(x)
+  x
+}
+
+#' @describeIn document_term_matrix Construct a document term matrix from a list of tokens
+#' @export
+document_term_matrix.default <- function(x, vocabulary, ...){  
+  stopifnot(is.list(x))
+  .N <- document <- term <- NULL
+  docs <- names(x)
+  if(is.null(docs)){
+    docs <- seq_along(x)
+  }else{
+    if(anyDuplicated(docs)){
+      stop("x has duplicate names")
+    }
+  }
+  x <- list(document = rep(x = docs, times = sapply(x, length)),
+            term     = unlist(x, use.names = FALSE))
+  x$document <- factor(x$document, levels = docs)
+  if(!missing(vocabulary)){
+    x$term <- factor(x$term, levels = setdiff(unique(c(vocabulary, levels(factor(x$term)))), NA))
+  }else{
+    x$term <- factor(x$term)
+  }
+  x <- data.table::setDT(x)
+  x <- x[!is.na(term), list(freq = .N), by = list(document, term)]
+  
+  doclabels  <- levels(x$document)
+  termlabels <- levels(x$term)
+  
+  x$document <- as.integer(x$document)
+  x$term     <- as.integer(x$term)
+  
+  dtm <- Matrix::sparseMatrix(i=x$document, j = x$term, x = x$freq, 
+                      dims = c(length(doclabels), length(termlabels)),
+                      dimnames = list(doclabels, termlabels))
+  dtm
+}
+
 
 
 #' @describeIn document_term_matrix Convert an object of class \code{DocumentTermMatrix} from the tm package to a sparseMatrix
@@ -515,6 +633,7 @@ dtm_cor <- function(x) {
 #' If there are missing columns these will be filled with NA values.
 #' @param x a sparse matrix such as a "dgCMatrix" object which is returned by \code{\link{document_term_matrix}}
 #' @param y a sparse matrix such as a "dgCMatrix" object which is returned by \code{\link{document_term_matrix}}
+#' @param ... more sparse matrices
 #' @return a sparse matrix where either rows are put below each other in case of \code{dtm_rbind}
 #' or columns are put next to each other in case of \code{dtm_cbind}
 #' @seealso \code{\link{document_term_matrix}}
@@ -532,22 +651,35 @@ dtm_cor <- function(x) {
 #' dtm2 <- document_term_frequencies(x = subset(x, doc_id %in% c("10789408", "12285061", "35509091")),
 #'                                   document = "doc_id", term = "token")
 #' dtm2 <- document_term_matrix(dtm2)
+#' dtm3 <- document_term_frequencies(x = subset(x, doc_id %in% c("31133394", "36224131")),
+#'                                   document = "doc_id", term = "token")
+#' dtm3 <- document_term_matrix(dtm3)
 #' m <- dtm_rbind(dtm1, dtm2)
+#' dim(m)
+#' m <- dtm_rbind(dtm1, dtm2, dtm3)
 #' dim(m)
 #' 
 #' ## cbind
 #' library(data.table)
 #' x <- as.data.table(brussels_reviews_anno)
-#' x <- x[, token_bigram := txt_nextgram(token, n = 2), by = list(doc_id, sentence_id)]
+#' x <- x[, token_bigram  := txt_nextgram(token, n = 2), by = list(doc_id, sentence_id)]
+#' x <- x[, lemma_upos    := sprintf("%s//%s", lemma, upos)]
 #' dtm1 <- document_term_frequencies(x = x, document = "doc_id", term = c("token"))
 #' dtm1 <- document_term_matrix(dtm1)
 #' dtm2 <- document_term_frequencies(x = x, document = "doc_id", term = c("token_bigram"))
 #' dtm2 <- document_term_matrix(dtm2)
+#' dtm3 <- document_term_frequencies(x = x, document = "doc_id", term = c("upos"))
+#' dtm3 <- document_term_matrix(dtm3)
+#' dtm4 <- document_term_frequencies(x = x, document = "doc_id", term = c("lemma_upos"))
+#' dtm4 <- document_term_matrix(dtm4)
 #' m <- dtm_cbind(dtm1, dtm2)
+#' dim(m)
+#' m <- dtm_cbind(dtm1, dtm2, dtm3, dtm4)
 #' dim(m)
 #' m <- dtm_cbind(dtm1[-c(100, 999), ], dtm2[-1000,])
 #' dim(m)
-dtm_cbind <- function(x, y){
+dtm_cbind <- function(x, y, ...){
+  ldots <- list(...)
   if(is.null(rownames(x))) stop("x needs to have rownames")
   if(is.null(rownames(y))) stop("y needs to have rownames")
   if(length(intersect(colnames(x), colnames(y))) > 0) stop("x and y should not have overlapping column names")
@@ -566,12 +698,20 @@ dtm_cbind <- function(x, y){
                                      dims = c(length(addright), ncol(y)), dimnames = list(addright, colnames(y)))
     y <- methods::rbind2(y, addright)
   }
-  cbind2(x[r, , drop = FALSE], y[r, , drop = FALSE])
+  out <- cbind2(x[r, , drop = FALSE], y[r, , drop = FALSE])
+  if(length(ldots) > 0){
+    largs <- ldots[-1]
+    largs$x <- out
+    largs$y <- ldots[[1]]
+    out <- do.call(dtm_cbind, largs)
+  }
+  out
 }
 
 #' @export
 #' @rdname dtm_bind
-dtm_rbind <- function(x, y){
+dtm_rbind <- function(x, y, ...){
+  ldots <- list(...)
   if(is.null(colnames(x))) stop("x needs to have colnames")
   if(is.null(colnames(y))) stop("y needs to have colnames")
   if(length(intersect(rownames(x), rownames(y))) > 0) stop("x and y should not have overlapping row names")
@@ -590,14 +730,29 @@ dtm_rbind <- function(x, y){
                                      dims = c(nrow(y), length(addright)), dimnames = list(rownames(y), addright))
     y <- methods::cbind2(y, addright)
   }
-  rbind2(x[, r, drop = FALSE], y[, r, drop = FALSE])
+  out <- rbind2(x[, r, drop = FALSE], y[, r, drop = FALSE])
+  if(length(ldots) > 0){
+    largs <- ldots[-1]
+    largs$x <- out
+    largs$y <- ldots[[1]]
+    out <- do.call(dtm_rbind, largs)
+  }
+  out
 }
 
 
 #' @title Column sums and Row sums for document term matrices
 #' @description Column sums and Row sums for document term matrices
 #' @param dtm an object returned by \code{\link{document_term_matrix}}
-#' @return a vector of row/column sums with corresponding names
+#' @param groups optionally, a list with column/row names or column/row indexes of the \code{dtm} which should be combined by 
+#' taking the sum over the rows or columns of these. See the examples
+#' @return 
+#' Returns either a vector in case argument \code{groups} is not provided or a sparse matrix of class \code{dgCMatrix}
+#' in case argument \code{groups} is provided
+#' \itemize{
+#' \item{in case \code{groups} is not provided: a vector of row/column sums with corresponding names}
+#' \item{in case \code{groups} is provided: a sparse matrix containing summed information over the groups of rows/columns}
+#' }
 #' @export
 #' @aliases dtm_colsums dtm_rowsums
 #' @examples 
@@ -610,14 +765,129 @@ dtm_rbind <- function(x, y){
 #' x
 #' x <- dtm_rowsums(dtm)
 #' head(x)
-dtm_colsums <- function(dtm){
-  Matrix::colSums(dtm)
+#' 
+#' ## 
+#' ## Grouped column summation
+#' ## 
+#' x <- list(doc1 = c("aa", "bb", "aa", "b"), doc2 = c("bb", "bb", "BB"))
+#' dtm <- document_term_matrix(x)
+#' dtm
+#' dtm_colsums(dtm, groups = list(combinedB = c("b", "bb"), combinedA = c("aa", "A")))
+#' dtm_colsums(dtm, groups = list(combinedA = c("aa", "A")))
+#' dtm_colsums(dtm, groups = list(
+#'   combinedB = grep(pattern = "b", colnames(dtm), ignore.case = TRUE, value = TRUE), 
+#'   combinedA = c("aa", "A", "ZZZ"),
+#'   test      = character()))
+#' dtm_colsums(dtm, groups = list())
+#' 
+#' ## 
+#' ## Grouped row summation
+#' ## 
+#' x <- list(doc1 = c("aa", "bb", "aa", "b"), 
+#'           doc2 = c("bb", "bb", "BB"),
+#'           doc3 = c("bb", "bb", "BB"),
+#'           doc4 = c("bb", "bb", "BB", "b"))
+#' dtm <- document_term_matrix(x)
+#' dtm
+#' dtm_rowsums(dtm, groups = list(doc1 = "doc1", combi = c("doc2", "doc3", "doc4")))
+#' dtm_rowsums(dtm, groups = list(unknown = "docUnknown", combi = c("doc2", "doc3", "doc4")))
+#' dtm_rowsums(dtm, groups = list())
+dtm_colsums <- function(dtm, groups){
+  if(missing(groups)){
+    Matrix::colSums(dtm)
+  }else{
+    dtm_colsums_group(dtm, groups)
+  }
 }
 
 #' @export
 #' @rdname dtm_colsums
-dtm_rowsums <- function(dtm){
-  Matrix::rowSums(dtm)
+dtm_rowsums <- function(dtm, groups){
+  if(missing(groups)){
+    Matrix::rowSums(dtm)
+  }else{
+    dtm_rowsums_group(dtm, groups)
+  }
+}
+
+
+dtm_colsums_group <- function(x, groups){
+  stopifnot(is.list(groups))
+  if(length(groups) == 0){
+     extra <- matrix(nrow = nrow(x), ncol = 0, byrow = FALSE, dimnames = list(rownames(x)))
+     extra <- as(extra, "dgCMatrix")
+     return(extra)
+  }
+  #stopifnot(length(groups) > 0)
+  #stopifnot(all(sapply(groups, is.character)))
+  if(is.null(names(groups))){
+    stop("groups should have names")
+  }
+  x_fields <- colnames(x)
+  groups <- lapply(groups, FUN=function(x){
+    if(is.character(x)){
+      x
+    }else if(is.integer(x) | is.numeric(x)){
+      x_fields[x]
+    }else{
+      stop("groups should contain a list of column names")
+    }
+  })
+  extra <- mapply(fields = groups, column_j = seq_along(groups), FUN=function(fields, column_j){
+    fields <- which(x_fields %in% fields)
+    if(length(fields) == 0){
+      list(i = integer(), j = integer(), x = numeric())
+    }else{
+      values <- dtm_rowsums(x[, fields, drop = FALSE])
+      idx <- which(values != 0)
+      list(i = idx, j = rep(column_j, length(idx)), x = values[idx])
+    } 
+  }, SIMPLIFY = FALSE)
+  extra <- data.table::rbindlist(extra)
+  extra <- Matrix::sparseMatrix(dims = c(nrow(x), length(groups)), 
+                                dimnames = list(rownames(x), names(groups)), 
+                                i = extra$i, j = extra$j, x = extra$x)
+  extra
+}
+
+
+dtm_rowsums_group <- function(x, groups){
+  stopifnot(is.list(groups))
+  if(length(groups) == 0){
+     extra <- matrix(nrow = 0, ncol = ncol(x), byrow = FALSE, dimnames = list(character(), colnames(x)))
+     extra <- as(extra, "dgCMatrix")
+     return(extra)
+  }
+  #stopifnot(length(groups) > 0)
+  #stopifnot(all(sapply(groups, is.character)))
+  if(is.null(names(groups))){
+    stop("groups should have names")
+  }
+  x_rows <- rownames(x)
+  groups <- lapply(groups, FUN=function(x){
+    if(is.character(x)){
+      x
+    }else if(is.integer(x) | is.numeric(x)){
+      x_rows[x]
+    }else{
+      stop("groups should contain a list of row names")
+    }
+  })
+  extra <- mapply(rows = groups, row_i = seq_along(groups), FUN=function(rows, row_i){
+    rows <- which(x_rows %in% rows)
+    if(length(rows) == 0){
+      list(i = integer(), j = integer(), x = numeric())
+    }else{
+      values <- dtm_colsums(x[rows, , drop = FALSE])
+      idx <- which(values != 0)
+      list(i = rep(row_i, length(idx)), j = idx, x = values[idx])
+    } 
+  }, SIMPLIFY = FALSE)
+  extra <- data.table::rbindlist(extra)
+  extra <- Matrix::sparseMatrix(dims = c(length(groups), ncol(x)), 
+                                dimnames = list(names(groups), colnames(x)), 
+                                i = extra$i, j = extra$j, x = extra$x)
+  extra
 }
 
 
@@ -826,6 +1096,138 @@ dtm_conform <- function(dtm, rows, columns, fill){
 }
 
 
+#' @title Reorder a Document-Term-Matrix alongside a vector or data.frame 
+#' @description This utility function is useful to align a Document-Term-Matrix with 
+#' information in a data.frame or a vector to predict, such that both the predictive information as well as the target 
+#' is available in the same order. \cr
+#' Matching is done based on the identifiers in the rownames of \code{x} and either the names of the \code{y} vector 
+#' or the first column of \code{y} in case it is a data.frame.
+#' @param x a Document-Term-Matrix of class dgCMatrix (which can be an object returned by \code{\link{document_term_matrix}})
+#' @param y either a vector or data.frame containing something to align with \code{x} (e.g. for predictive purposes).
+#' \itemize{
+#' \item{In case \code{y} is a vector, it should have names which are available in the rownames of \code{x}.}
+#' \item{In case \code{y} is a data.frame, it's first column should contain identifiers which are available in the rownames of \code{x}.}
+#' }
+#' @param FUN a function to be applied on \code{x} before aligning it to \code{y}. See the examples
+#' @param ... further arguments passed on to FUN
+#' @return a list with elements \code{x} and \code{y} containing the document term matrix \code{x} in the same order as \code{y}.
+#' \itemize{
+#' \item{If in \code{y} a vector was passed, the returned \code{y} element will be a vector}
+#' \item{If in \code{y} a data.frame was passed with more than 2 columns, the returned \code{y} element will be a data.frame}
+#' \item{If in \code{y} a data.frame was passed with exactly 2 columns, the returned \code{y} element will be a vector}
+#' }
+#' Only returns data of \code{x} with overlapping identifiers in \code{y}.
+#' @export
+#' @seealso \code{\link{document_term_matrix}}
+#' @examples 
+#' x <- matrix(1:9, nrow = 3, dimnames = list(c("a", "b", "c")))
+#' x
+#' dtm_align(x = x, 
+#'           y = c(b = 1, a = 2, c = 6, d = 6))
+#' dtm_align(x = x, 
+#'           y = c(b = 1, a = 2, c = 6, d = 6, d = 7, a = -1))
+#'           
+#' data(brussels_reviews)
+#' data(brussels_listings)
+#' x <- brussels_reviews
+#' x <- strsplit.data.frame(x, term = "feedback", group = "listing_id")
+#' x <- document_term_frequencies(x)
+#' x <- document_term_matrix(x)
+#' y <- brussels_listings$price
+#' names(y) <- brussels_listings$listing_id
+#' 
+#' ## align a matrix of predictors with a vector to predict
+#' trainset <- dtm_align(x = x, y = y)
+#' trainset <- dtm_align(x = x, y = y, FUN = function(dtm){
+#'   dtm <- dtm_remove_lowfreq(dtm, minfreq = 5)
+#'   dtm <- dtm_sample(dtm)
+#'   dtm
+#' })
+#' head(names(y))
+#' head(rownames(x))
+#' head(names(trainset$y))
+#' head(rownames(trainset$x))
+#' 
+#' ## align a matrix of predictors with a data.frame
+#' trainset <- dtm_align(x = x, y = brussels_listings[, c("listing_id", "price")])
+#' trainset <- dtm_align(x = x, 
+#'                 y = brussels_listings[, c("listing_id", "price", "room_type")])
+#' head(trainset$y$listing_id)
+#' head(rownames(trainset$x))
+#' 
+#' ## example with duplicate data in case of data balancing
+#' dtm_align(x = matrix(1:30, nrow = 3, dimnames = list(c("a", "b", "c"))), 
+#'           y = c(a = 1, a = 2, b = 3, d = 6, b = 6))
+#' target   <- subset(brussels_listings, listing_id %in% brussels_reviews$listing_id)
+#' target   <- rbind(target[1:3, ], target[c(2, 3), ], target[c(1, 4), ])
+#' trainset <- dtm_align(x = x, y = target[, c("listing_id", "price")])
+#' trainset <- dtm_align(x = x, y = setNames(target$price, target$listing_id))
+#' names(trainset$y)
+#' rownames(trainset$x)
+dtm_align <- function(x, y, FUN, ...){
+  if(!inherits(x, c("dgCMatrix", "matrix"))){
+    warning(sprintf("expecting x to be of class dgCMatrix, while you passed a %s", paste(class(x), collapse = " ")))
+  }
+  if(!missing(FUN)){
+    x <- FUN(x, ...)
+  }
+  if(is.data.frame(y)){
+    if(ncol(y) < 2){
+      stop("y is a data.frame, it should have at least 2 columns, where the first is a document id")
+    }
+    nm <- y[[1]]
+    #y <- y[[2]]
+    #names(y) <- nm
+  }else if(is.vector(y) | is.factor(y)){
+    nm <- names(y)
+    if(is.null(nm)){
+      stop("y is required to be a vector which has names otherwise we can not align it with the rownames of x")
+    }
+  }else{
+    stop("dtm_match is only implemented for y of type data.frame or with vectors")
+  }
+  X   <- x[which(rownames(x) %in% nm), , drop = FALSE]
+  #idx <- match(rownames(X), nm)
+  idx <- which(nm %in% rownames(X))
+  if(is.vector(y) | is.factor(y)){
+    Y <- y[idx]
+  }else if(ncol(y) == 2){
+    Y <- y[[2]]
+    names(Y) <- nm
+    Y <- Y[idx]
+  }else{
+    Y <- y[idx, , drop = FALSE]
+  }
+  X   <- X[match(nm[idx], rownames(X)), , drop = FALSE]
+  structure(list(x = X, y = Y), class = "dtm_aligned")
+}
+
+#' @title Random samples and permutations from a Document-Term-Matrix
+#' @description Sample the specified number of rows from the Document-Term-Matrix using either with or without replacement. 
+#' @param dtm a document term matrix of class dgCMatrix (which can be an object returned by \code{\link{document_term_matrix}})
+#' @param size a positive number, the number of rows to sample
+#' @param replace should sampling be with replacement
+#' @param prob a vector of probability weights, one for each row of \code{x}
+#' @export
+#' @return \code{dtm} with as many rows as specified in \code{size}
+#' @examples 
+#' x <- list(doc1 = c("aa", "bb", "cc", "aa", "b"), 
+#'           doc2 = c("bb", "bb", "dd", ""), 
+#'           doc3 = character(),
+#'           doc4 = c("cc", NA), 
+#'           doc5 = character())
+#' dtm <- document_term_matrix(x)
+#' dtm_sample(dtm, size = 2)
+#' dtm_sample(dtm, size = 3)
+#' dtm_sample(dtm, size = 2)
+#' dtm_sample(dtm, size = 8, replace = TRUE)
+#' dtm_sample(dtm, size = 8, replace = TRUE, prob = c(1, 1, 0.01, 0.5, 0.01))
+dtm_sample <- function(dtm, size = nrow(dtm), replace = FALSE, prob = NULL){
+  idx <- sample.int(n = nrow(dtm), size = size, replace = replace, prob = prob)
+  dtm[idx, ]
+}
+
+
 
 #' @title Semantic Similarity to a Singular Value Decomposition
 #' @description Calculate the similarity of a document term matrix to a set of terms based on 
@@ -1027,3 +1429,7 @@ print.svd_similarity <- function(x, n = 7, digits = 2, ...){
   })
   invisible()
 }
+
+
+
+

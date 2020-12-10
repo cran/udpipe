@@ -1,3 +1,18 @@
+## CHANGES IN udpipe VERSION 0.8.5
+
+- Added document_term_matrix.default, document_term_matrix.integer and document_term_matrix.numeric
+- Added groups argument to dtm_colsums and dtm_rowsums
+- Added dtm_align
+- Added dtm_sample
+- Added document_term_matrix.matrix
+- dtm_cbind and dtm_rbind allow to pass more than 2 sparse matrices
+- cbind_morphological gains argument which to specify which morphological features to extract
+- txt_count now returns NA when NA is provided instead of an error
+- txt_contains now returns NA when NA is provided instead of FALSE, unless value is set to TRUE
+- txt_collapse now also works if provided a list of character vectors
+- paste.data.frame now works as well if a data.table is passed instead of a data.frame
+- txt_recode gains an extra argument na.rm
+
 ## CHANGES IN udpipe VERSION 0.8.4-1
 
 - Fixing the Solaris compilation issue in ufal::udpipe::multiword_splitter::append_token

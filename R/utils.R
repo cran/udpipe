@@ -1,19 +1,36 @@
 #' @title Collapse a character vector while removing missing data.
 #' @description Collapse a character vector while removing missing data.
-#' @param x a character vector
+#' @param x a character vector or a list of character vectors
 #' @param collapse a character string to be used to collapse the vector. Defaults to a space: ' '.
 #' @return a character vector of length 1 with the content of x collapsed using paste
 #' @export
 #' @seealso \code{\link{paste}}
 #' @examples 
 #' txt_collapse(c(NA, "hello", "world", NA))
+#' 
+#' x <- list(a = c("h", "i"), b = c("some", "more", "text"), 
+#'           c = character(), d = NA)
+#' txt_collapse(x, collapse = " ")
 txt_collapse <- function(x, collapse=" "){
-  x <- as.character(x)
-  x <- x[!is.na(x)]
-  if(length(x) == 0){
-    return(NA_character_)
-  }else if(length(x) > 1){
-    x <- paste(x, collapse = collapse)
+  if(!is.list(x)){
+    x <- as.character(x)
+    x <- x[!is.na(x)]
+    if(length(x) == 0){
+      return(NA_character_)
+    }else if(length(x) > 1){
+      x <- paste(x, collapse = collapse)
+    } 
+  }else{
+    x <- sapply(x, FUN = function(x, collapse){
+      x <- as.character(x)
+      x <- x[!is.na(x)]
+      if(length(x) == 0){
+        return(NA_character_)
+      }else if(length(x) > 1){
+        x <- paste(x, collapse = collapse)
+      } 
+      x
+    }, collapse = collapse)
   }
   x
 }
@@ -64,6 +81,8 @@ txt_show <- function(x){
 #' @param from a character vector with values of \code{x} which you want to recode
 #' @param to a character vector with values of you want to use to recode to where you
 #' want to replace values of \code{x} which correspond to \code{from[i]} to \code{to[i]}
+#' @param na.rm logical, if set to TRUE, will put all values of \code{x} which have no
+#' matching value in \code{from} to NA. Defaults to \code{FALSE}
 #' @return a character vector of the same length of \code{x} where values of \code{x}
 #' which are given in \code{from} will be replaced by the corresponding element in \code{to}
 #' @seealso \code{\link{match}}
@@ -73,11 +92,22 @@ txt_show <- function(x){
 #' txt_recode(x = x,
 #'            from = c("VERB", "ADV"),
 #'            to = c("conjugated verb", "adverb"))
-txt_recode <- function(x, from = c(), to = c()){
+#' txt_recode(x = x,
+#'            from = c("VERB", "ADV"),
+#'            to = c("conjugated verb", "adverb"),
+#'            na.rm = TRUE)
+#' txt_recode(x = x,
+#'            from = c("VERB", "ADV", "NOUN"),
+#'            to = c("conjugated verb", "adverb", "noun"),
+#'            na.rm = TRUE)
+txt_recode <- function(x, from = c(), to = c(), na.rm = FALSE){
   if(length(x) == 0){
     return(x)
   }
   stopifnot(length(from) == length(to))
+  if(na.rm){
+    return(recode(x = x, from = from, to = to))
+  }
   nongiven <- unique(x[!is.na(x)])
   nongiven <- setdiff(nongiven, from)
   if(length(nongiven) > 0) {
@@ -501,7 +531,8 @@ txt_tagsequence <- function(x, entities){
 #' @examples
 #' x <- c("The cats are eating catfood", 
 #'        "Our cat is eating the catfood", 
-#'        "the dog eats catfood, he likes it")
+#'        "the dog eats catfood, he likes it", 
+#'        NA)
 #' txt_contains(x, patterns = c("cat", "dog")) 
 #' txt_contains(x, patterns = c("cat", "dog"), value = TRUE) 
 #' txt_contains(x, patterns = c("eats"), value = TRUE) 
@@ -510,6 +541,7 @@ txt_tagsequence <- function(x, entities){
 #'              value = TRUE) 
 #' txt_contains(x, "cat") & txt_contains(x, "dog")
 txt_contains <- function(x, patterns, value = FALSE, ignore.case = TRUE, ...){
+  
   if(is.list(patterns)){
     include <- rep_len(FALSE, length(x))
     exclude <- rep_len(FALSE, length(x))
@@ -528,6 +560,9 @@ txt_contains <- function(x, patterns, value = FALSE, ignore.case = TRUE, ...){
   }
   if(value == TRUE){
     result <- x[result]
+  }else{
+    idx <- which(is.na(x))
+    result[idx] <- as.logical(NA)
   }
   result
 }
@@ -543,14 +578,18 @@ txt_contains <- function(x, patterns, value = FALSE, ignore.case = TRUE, ...){
 #' @return an integer vector of the same length as \code{x} indicating how many times the pattern is occurring in \code{x}
 #' @export
 #' @examples 
-#' x <- c("abracadabra", "ababcdab")
+#' x <- c("abracadabra", "ababcdab", NA)
 #' txt_count(x, pattern = "ab")
 #' txt_count(x, pattern = "AB", ignore.case = TRUE)
 #' txt_count(x, pattern = "AB", ignore.case = FALSE)
 txt_count <- function(x, pattern, ...){
   result <- gregexpr(pattern = pattern, text = x, ...)
   sapply(result, FUN = function(x){
-    if(length(x) == 1 && x < 0){
+    test <- length(x) == 1 && x < 0
+    if(is.na(test)){
+      return(NA_integer_) 
+    }
+    if(test){
       0L
     }else{
       length(x)
@@ -636,6 +675,7 @@ paste.data.frame <- function(data, term, group, collapse=" "){
   stopifnot(inherits(group, "character"))
   stopifnot(all(c(term, group) %in% colnames(data)))
   if(inherits(data, "data.table")){
+    x <- data
   }else{
     x <- data.table::as.data.table(data[, c(term, group)])  
   }
