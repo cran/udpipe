@@ -1,3 +1,12 @@
+## CHANGES IN udpipe VERSION 0.8.6
+
+- Downloading models to paths containing non-ASCII characters now works (issue #95)
+- strsplit.data.frame gains ... which are passed on to strsplit (e.g. to use fixed=TRUE for speeding up)
+- read_connlu is now using fixed=TRUE when splitting by newline symbol (for speeding up parsing with function udpipe)
+- Added txt_paste
+- Added txt_context
+- Use html_vignette instead of html_document in the vignettes in order to reduce package size
+
 ## CHANGES IN udpipe VERSION 0.8.5
 
 - Added document_term_matrix.default, document_term_matrix.integer and document_term_matrix.numeric
