@@ -81,6 +81,34 @@ plot(scores$terminology$similarity_weight, log(scores$terminology$freq),
      type = "n")
 text(scores$terminology$similarity_weight, log(scores$terminology$freq), 
      labels = scores$terminology$term)
+     
+\dontrun{
+## More elaborate example using word2vec
+## building word2vec model on all Dutch texts, 
+## finding similarity of dtm to adjectives only
+set.seed(123)
+library(word2vec)
+text      <- subset(brussels_reviews_anno, language == "nl")
+text      <- paste.data.frame(text, term = "lemma", group = "doc_id")
+text      <- text$lemma
+model     <- word2vec(text, dim = 10, iter = 20, type = "cbow", min_count = 1)
+predict(model, newdata = names(weights), type = "nearest", top_n = 3)
+embedding <- as.matrix(model)
+}
+data(brussels_reviews_w2v_embeddings_lemma_nl)
+embedding <- brussels_reviews_w2v_embeddings_lemma_nl
+adjective <- subset(brussels_reviews_anno, language \%in\% "nl" & upos \%in\% "ADJ")
+adjective <- txt_freq(adjective$lemma)
+adjective <- subset(adjective, freq >= 5 & nchar(key) > 1)
+adjective <- adjective$key
+
+scores    <- dtm_svd_similarity(dtm, embedding, weights = weights, type = "dot", 
+                                terminology = adjective)
+scores
+plot(scores$terminology$similarity_weight, log(scores$terminology$freq), 
+     type = "n")
+text(scores$terminology$similarity_weight, log(scores$terminology$freq), 
+     labels = scores$terminology$term, cex = 0.8)
 }
 \seealso{
 \url{https://en.wikipedia.org/wiki/Latent_semantic_analysis}
