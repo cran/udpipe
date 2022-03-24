@@ -12,7 +12,7 @@
 
 <meta name="author" content="Jan Wijffels" />
 
-<meta name="date" content="2021-12-02" />
+<meta name="date" content="2022-03-23" />
 
 <title>UDPipe Natural Language Processing - Parallel</title>
 
@@ -336,7 +336,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">UDPipe Natural Language Processing - Parallel</h1>
 <h4 class="author">Jan Wijffels</h4>
-<h4 class="date">2021-12-02</h4>
+<h4 class="date">2022-03-23</h4>
 
 
 
@@ -363,7 +363,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </ul>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>path &lt;-<span class="st"> </span>model<span class="op">$</span>file_model</span>
 <span id="cb4-2"><a href="#cb4-2"></a>path</span></code></pre></div>
-<pre><code>[1] &quot;/tmp/Rtmp4ATlKV/Rbuild77453fdac6de/udpipe/vignettes/french-gsd-ud-2.5-191206.udpipe&quot;</code></pre>
+<pre><code>[1] &quot;/tmp/RtmpTMVRiO/Rbuild2b026e5efba1e4/udpipe/vignettes/french-gsd-ud-2.5-191206.udpipe&quot;</code></pre>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>annotation &lt;-<span class="st"> </span><span class="kw">udpipe</span>(x, path, <span class="dt">parallel.cores =</span> <span class="dv">2</span>)</span></code></pre></div>
 <p>Don’t forget to save your annotation such that you can load it back in later.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">saveRDS</span>(annotation, <span class="dt">file =</span> <span class="st">&quot;anno.rds&quot;</span>)</span>
