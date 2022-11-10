@@ -12,7 +12,7 @@
 
 <meta name="author" content="Jan Wijffels" />
 
-<meta name="date" content="2022-03-23" />
+<meta name="date" content="2022-11-09" />
 
 <title>UDPipe Natural Language Processing - Model Building</title>
 
@@ -336,7 +336,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">UDPipe Natural Language Processing - Model Building</h1>
 <h4 class="author">Jan Wijffels</h4>
-<h4 class="date">2022-03-23</h4>
+<h4 class="date">2022-11-09</h4>
 
 
 <div id="TOC">
@@ -371,7 +371,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>Such at file basically looks like this, or has a similar format. You can just download these from <a href="https://universaldependencies.org" class="uri">https://universaldependencies.org</a> for the language of your choice.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>file_conllu &lt;-<span class="st"> </span><span class="kw">system.file</span>(<span class="dt">package =</span> <span class="st">&quot;udpipe&quot;</span>, <span class="st">&quot;dummydata&quot;</span>, <span class="st">&quot;traindata.conllu&quot;</span>)</span>
 <span id="cb1-2"><a href="#cb1-2"></a>file_conllu</span></code></pre></div>
-<pre><code>[1] &quot;/tmp/RtmpTMVRiO/Rinst2b026ed7f0b6b/udpipe/dummydata/traindata.conllu&quot;</code></pre>
+<pre><code>[1] &quot;/tmp/Rtmp3lZMqs/Rinst10294535257cef/udpipe/dummydata/traindata.conllu&quot;</code></pre>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">cat</span>(<span class="kw">head</span>(<span class="kw">readLines</span>(file_conllu), <span class="dv">3</span>), <span class="dt">sep=</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)</span></code></pre></div>
 <pre><code># newdoc id = doc1
 # newpar

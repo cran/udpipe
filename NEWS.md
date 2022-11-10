@@ -1,3 +1,8 @@
+## CHANGES IN udpipe VERSION 0.8.10
+
+- use snprintf instead of sprintf to handle the R CMD check deprecating note on M1mac
+- reduction of timings of the examples of document_term_matrix, document_term_frequencies, document_term_frequencies_statistics, cooccurrence, dtm_bind, keywords_collocation
+
 ## CHANGES IN udpipe VERSION 0.8.9
 
 - fix R CMD check message on Fedora clang infrastructure: rcpp_udpipe.cpp:243:8: warning: use of bitwise '&' with boolean operands

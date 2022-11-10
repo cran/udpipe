@@ -77,6 +77,9 @@ the documents in the rows and the terms in the columns
 }}
 
 \examples{
+\dontshow{
+data.table::setDTthreads(1)
+}
 x <- data.frame(doc_id = c(1, 1, 2, 3, 4), 
  term = c("A", "C", "Z", "X", "G"), 
  freq = c(1, 5, 7, 10, 0))
@@ -85,16 +88,19 @@ document_term_matrix(x, vocabulary = LETTERS)
 
 ## Example on larger dataset
 data(brussels_reviews_anno)
-x <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "lemma")])
+\dontshow{
+brussels_reviews_anno <- subset(brussels_reviews_anno, language \%in\% "nl")
+}
+x   <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "lemma")])
 dtm <- document_term_matrix(x)
 dim(dtm)
-x <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "lemma")])
-x <- document_term_frequencies_statistics(x)
+x   <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "lemma")])
+x   <- document_term_frequencies_statistics(x)
 dtm <- document_term_matrix(x)
 dtm <- document_term_matrix(x, weight = "freq")
 dtm <- document_term_matrix(x, weight = "tf_idf")
 dtm <- document_term_matrix(x, weight = "bm25")
-x <- split(brussels_reviews_anno$lemma, brussels_reviews_anno$doc_id)
+x   <- split(brussels_reviews_anno$lemma, brussels_reviews_anno$doc_id)
 dtm <- document_term_matrix(x)
 ## example showing the vocubulary argument
 ## allowing you to making sure terms which are not in the data are provided in the resulting dtm
@@ -111,8 +117,8 @@ document_term_matrix(x)
 dtm <- document_term_matrix(x, vocabulary = c("a", "bb", "cc"))
 dtm <- dtm_conform(dtm, rows = c("doc1", "doc2", "doc7"), columns = c("a", "bb", "cc"))
 data(brussels_reviews)
-x <- strsplit(setNames(brussels_reviews$feedback, brussels_reviews$id), split = " +")
-x <- document_term_matrix(x)
+x   <- strsplit(setNames(brussels_reviews$feedback, brussels_reviews$id), split = " +")
+x   <- document_term_matrix(x)
 
 
 ##
@@ -121,7 +127,7 @@ x <- document_term_matrix(x)
 ##
 library(data.table)
 x <- as.data.table(brussels_reviews_anno)
-x <- x[, token_bigram := txt_nextgram(token, n = 2), by = list(doc_id, sentence_id)]
+x <- x[, token_bigram  := txt_nextgram(token, n = 2), by = list(doc_id, sentence_id)]
 x <- x[, token_trigram := txt_nextgram(token, n = 3), by = list(doc_id, sentence_id)]
 x <- document_term_frequencies(x = x, 
                                document = "doc_id", 
@@ -133,6 +139,14 @@ dtm <- document_term_matrix(x)
 ##
 x <- matrix(c(0, 0, 0, 1, NA, 3, 4, 5, 6, 7), nrow = 2)
 x
+dtm <- document_term_matrix(x)
+dtm
+x <- matrix(c(0, 0, 0, 0.1, NA, 0.3, 0.4, 0.5, 0.6, 0.7), nrow = 2)
+x
+dtm <- document_term_matrix(x)
+dtm
+x   <- setNames(c(TRUE, NA, FALSE, FALSE), c("a", "b", "c", "d"))
+x   <- as.matrix(x)
 dtm <- document_term_matrix(x)
 dtm
 

@@ -17,10 +17,16 @@
 #' will assume that freq is 1 for each row in the input dataset \code{x}.
 #' @export
 #' @examples 
+#' \dontshow{
+#' data.table::setDTthreads(1)
+#' }
 #' ##
 #' ## Calculate document_term_frequencies on a data.frame
 #' ##
 #' data(brussels_reviews_anno)
+#' \dontshow{
+#' brussels_reviews_anno <- subset(brussels_reviews_anno, language %in% "nl")
+#' }
 #' x <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "token")])
 #' x <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "lemma")])
 #' str(x)
@@ -43,7 +49,7 @@
 #' ##
 #' library(data.table)
 #' x <- as.data.table(brussels_reviews_anno)
-#' x <- x[, token_bigram := txt_nextgram(token, n = 2), by = list(doc_id, sentence_id)]
+#' x <- x[, token_bigram  := txt_nextgram(token, n = 2), by = list(doc_id, sentence_id)]
 #' x <- x[, token_trigram := txt_nextgram(token, n = 3), by = list(doc_id, sentence_id)]
 #' x <- document_term_frequencies(x = x, 
 #'                                document = "doc_id", 
@@ -116,6 +122,10 @@ document_term_frequencies.character <- function(x, document=paste("doc", seq_alo
 #' @export
 #' @examples 
 #' data(brussels_reviews_anno)
+#' \dontshow{
+#' data.table::setDTthreads(1)
+#' brussels_reviews_anno <- subset(brussels_reviews_anno, language %in% "nl")
+#' }
 #' x <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "token")])
 #' x <- document_term_frequencies_statistics(x)
 #' head(x)
@@ -167,6 +177,9 @@ document_term_frequencies_statistics <- function(x, k = 1.2, b = 0.75){
 #' @export
 #' @seealso \code{\link[Matrix]{sparseMatrix}}, \code{\link{document_term_frequencies}}
 #' @examples 
+#' \dontshow{
+#' data.table::setDTthreads(1)
+#' }
 #' x <- data.frame(doc_id = c(1, 1, 2, 3, 4), 
 #'  term = c("A", "C", "Z", "X", "G"), 
 #'  freq = c(1, 5, 7, 10, 0))
@@ -175,16 +188,19 @@ document_term_frequencies_statistics <- function(x, k = 1.2, b = 0.75){
 #' 
 #' ## Example on larger dataset
 #' data(brussels_reviews_anno)
-#' x <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "lemma")])
+#' \dontshow{
+#' brussels_reviews_anno <- subset(brussels_reviews_anno, language %in% "nl")
+#' }
+#' x   <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "lemma")])
 #' dtm <- document_term_matrix(x)
 #' dim(dtm)
-#' x <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "lemma")])
-#' x <- document_term_frequencies_statistics(x)
+#' x   <- document_term_frequencies(brussels_reviews_anno[, c("doc_id", "lemma")])
+#' x   <- document_term_frequencies_statistics(x)
 #' dtm <- document_term_matrix(x)
 #' dtm <- document_term_matrix(x, weight = "freq")
 #' dtm <- document_term_matrix(x, weight = "tf_idf")
 #' dtm <- document_term_matrix(x, weight = "bm25")
-#' x <- split(brussels_reviews_anno$lemma, brussels_reviews_anno$doc_id)
+#' x   <- split(brussels_reviews_anno$lemma, brussels_reviews_anno$doc_id)
 #' dtm <- document_term_matrix(x)
 #' ## example showing the vocubulary argument
 #' ## allowing you to making sure terms which are not in the data are provided in the resulting dtm
@@ -201,8 +217,8 @@ document_term_frequencies_statistics <- function(x, k = 1.2, b = 0.75){
 #' dtm <- document_term_matrix(x, vocabulary = c("a", "bb", "cc"))
 #' dtm <- dtm_conform(dtm, rows = c("doc1", "doc2", "doc7"), columns = c("a", "bb", "cc"))
 #' data(brussels_reviews)
-#' x <- strsplit(setNames(brussels_reviews$feedback, brussels_reviews$id), split = " +")
-#' x <- document_term_matrix(x)
+#' x   <- strsplit(setNames(brussels_reviews$feedback, brussels_reviews$id), split = " +")
+#' x   <- document_term_matrix(x)
 #' 
 #' 
 #' ##
@@ -211,7 +227,7 @@ document_term_frequencies_statistics <- function(x, k = 1.2, b = 0.75){
 #' ##
 #' library(data.table)
 #' x <- as.data.table(brussels_reviews_anno)
-#' x <- x[, token_bigram := txt_nextgram(token, n = 2), by = list(doc_id, sentence_id)]
+#' x <- x[, token_bigram  := txt_nextgram(token, n = 2), by = list(doc_id, sentence_id)]
 #' x <- x[, token_trigram := txt_nextgram(token, n = 3), by = list(doc_id, sentence_id)]
 #' x <- document_term_frequencies(x = x, 
 #'                                document = "doc_id", 
@@ -223,6 +239,14 @@ document_term_frequencies_statistics <- function(x, k = 1.2, b = 0.75){
 #' ##
 #' x <- matrix(c(0, 0, 0, 1, NA, 3, 4, 5, 6, 7), nrow = 2)
 #' x
+#' dtm <- document_term_matrix(x)
+#' dtm
+#' x <- matrix(c(0, 0, 0, 0.1, NA, 0.3, 0.4, 0.5, 0.6, 0.7), nrow = 2)
+#' x
+#' dtm <- document_term_matrix(x)
+#' dtm
+#' x   <- setNames(c(TRUE, NA, FALSE, FALSE), c("a", "b", "c", "d"))
+#' x   <- as.matrix(x)
 #' dtm <- document_term_matrix(x)
 #' dtm
 #' 
@@ -283,6 +307,12 @@ document_term_matrix.data.frame <- function(x, vocabulary, weight = "freq", ...)
 #' @export
 document_term_matrix.matrix <- function(x, ...){
   x <- as(x, "dgCMatrix")
+  #x <- as(as(as(x, "dMatrix"), "generalMatrix"), "CsparseMatrix")
+  #x <- Matrix(data = x, sparse = TRUE, doDiag = FALSE, dimnames = dimnames(x))
+  #if(is.logical(x)){
+  #  x[] <- as.integer(x)
+  #}
+  #x <- as(x, "CsparseMatrix")
   x
 }
 
@@ -641,6 +671,9 @@ dtm_cor <- function(x) {
 #' @aliases dtm_rbind dtm_cbind
 #' @export
 #' @examples 
+#' \dontshow{
+#' data.table::setDTthreads(1)
+#' }
 #' data(brussels_reviews_anno)
 #' x <- brussels_reviews_anno
 #' 
@@ -661,7 +694,8 @@ dtm_cor <- function(x) {
 #' 
 #' ## cbind
 #' library(data.table)
-#' x <- as.data.table(brussels_reviews_anno)
+#' x <- subset(brussels_reviews_anno, language %in% c("nl", "fr"))
+#' x <- as.data.table(x)
 #' x <- x[, token_bigram  := txt_nextgram(token, n = 2), by = list(doc_id, sentence_id)]
 #' x <- x[, lemma_upos    := sprintf("%s//%s", lemma, upos)]
 #' dtm1 <- document_term_frequencies(x = x, document = "doc_id", term = c("token"))
@@ -815,7 +849,7 @@ dtm_colsums_group <- function(x, groups){
   stopifnot(is.list(groups))
   if(length(groups) == 0){
      extra <- matrix(nrow = nrow(x), ncol = 0, byrow = FALSE, dimnames = list(rownames(x)))
-     extra <- as(extra, "dgCMatrix")
+     extra <- document_term_matrix.matrix(extra, "dgCMatrix")
      return(extra)
   }
   #stopifnot(length(groups) > 0)
@@ -855,7 +889,7 @@ dtm_rowsums_group <- function(x, groups){
   stopifnot(is.list(groups))
   if(length(groups) == 0){
      extra <- matrix(nrow = 0, ncol = ncol(x), byrow = FALSE, dimnames = list(character(), colnames(x)))
-     extra <- as(extra, "dgCMatrix")
+     extra <- document_term_matrix.matrix(extra, "dgCMatrix")
      return(extra)
   }
   #stopifnot(length(groups) > 0)
