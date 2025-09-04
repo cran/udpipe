@@ -1,3 +1,11 @@
+## CHANGES IN udpipe VERSION 0.8.12
+
+- avoid warning: overlapping comparisons always evaluate to true in parse_int 
+   - replacing: !(str.str[0] >= '0' || str.str[0] <= '9') with (str.str[0] < '0' || str.str[0] > '9')
+- fix some R CMD check NOTEs about the use of itemize in the documentation
+- fix a vignette index entry NOTE
+- fix of an URL in the documentation
+   
 ## CHANGES IN udpipe VERSION 0.8.11
 
 - replace move with std::move to fix R CMD check warning on recent versions of clang compilers
