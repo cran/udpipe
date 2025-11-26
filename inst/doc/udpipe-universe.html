@@ -12,35 +12,33 @@
 
 <meta name="author" content="Jan Wijffels" />
 
-<meta name="date" content="2025-09-04" />
+<meta name="date" content="2025-11-25" />
 
 <title>UDPipe Natural Language Processing - Universe</title>
 
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
   }
 });
 </script>
 
 <style type="text/css">
-  code{white-space: pre-wrap;}
-  span.smallcaps{font-variant: small-caps;}
-  span.underline{text-decoration: underline;}
-  div.column{display: inline-block; vertical-align: top; width: 50%;}
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-  ul.task-list{list-style: none;}
-    </style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
 
 
 
@@ -239,31 +237,49 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">UDPipe Natural Language Processing - Universe</h1>
+<h1 class="title toc-ignore">UDPipe Natural Language Processing -
+Universe</h1>
 <h4 class="author">Jan Wijffels</h4>
-<h4 class="date">2025-09-04</h4>
+<h4 class="date">2025-11-25</h4>
 
 
 
 <div id="udpipe-universe" class="section level2">
 <h2>udpipe universe</h2>
-<p>The udpipe package is loosely coupled with other NLP packages by the same author. Loosely coupled means that none of the packages have hard dependencies of one another making it easy to install and maintain and allowing you to use only the packages and tools that you want.</p>
-<p>Hereby a small list of loosely coupled packages by the same author which contain functions and documentation where the udpipe package is used as a preprocessing step.</p>
+<p>The udpipe package is loosely coupled with other NLP packages by the
+same author. Loosely coupled means that none of the packages have hard
+dependencies of one another making it easy to install and maintain and
+allowing you to use only the packages and tools that you want.</p>
+<p>Hereby a small list of loosely coupled packages by the same author
+which contain functions and documentation where the udpipe package is
+used as a preprocessing step.</p>
 <ul>
 <li><strong>BTM</strong>: Biterm Topic Modelling: available at <a href="https://CRAN.R-project.org/package=BTM" class="uri">https://CRAN.R-project.org/package=BTM</a></li>
-<li><strong>crfsuite</strong>: Build named entity recognition models using conditional random fields: <a href="https://CRAN.R-project.org/package=crfsuite" class="uri">https://CRAN.R-project.org/package=crfsuite</a></li>
-<li><strong>nametagger</strong>: Build named entity recognition models using markov models: <a href="https://CRAN.R-project.org/package=nametagger" class="uri">https://CRAN.R-project.org/package=nametagger</a></li>
-<li><strong>torch.ner</strong>: Named Entity Recognition using torch</li>
-<li><strong>word2vec</strong>: Training and applying the word2vec algorithm: <a href="https://CRAN.R-project.org/package=word2vec" class="uri">https://CRAN.R-project.org/package=word2vec</a></li>
-<li><strong>doc2vec</strong>: Building paragraph vector models also known as doc2vec <a href="https://CRAN.R-project.org/package=doc2vec" class="uri">https://CRAN.R-project.org/package=doc2vec</a></li>
-<li><strong>ruimtehol</strong>: Text embedding techniques using Starspace: <a href="https://CRAN.R-project.org/package=ruimtehol" class="uri">https://CRAN.R-project.org/package=ruimtehol</a></li>
-<li><strong>topicmodels.etm</strong>: Topic Modelling in Embedding Spaces: <a href="https://CRAN.R-project.org/package=topicmodels.etm" class="uri">https://CRAN.R-project.org/package=topicmodels.etm</a></li>
+<li><strong>crfsuite</strong>: Build named entity recognition models
+using conditional random fields: <a href="https://CRAN.R-project.org/package=crfsuite" class="uri">https://CRAN.R-project.org/package=crfsuite</a></li>
+<li><strong>nametagger</strong>: Build named entity recognition models
+using markov models: <a href="https://CRAN.R-project.org/package=nametagger" class="uri">https://CRAN.R-project.org/package=nametagger</a></li>
+<li><strong>torch.ner</strong>: Named Entity Recognition using
+torch</li>
+<li><strong>word2vec</strong>: Training and applying the word2vec
+algorithm: <a href="https://CRAN.R-project.org/package=word2vec" class="uri">https://CRAN.R-project.org/package=word2vec</a></li>
+<li><strong>doc2vec</strong>: Building paragraph vector models also
+known as doc2vec <a href="https://CRAN.R-project.org/package=doc2vec" class="uri">https://CRAN.R-project.org/package=doc2vec</a></li>
+<li><strong>ruimtehol</strong>: Text embedding techniques using
+Starspace: <a href="https://CRAN.R-project.org/package=ruimtehol" class="uri">https://CRAN.R-project.org/package=ruimtehol</a></li>
+<li><strong>topicmodels.etm</strong>: Topic Modelling in Embedding
+Spaces: <a href="https://CRAN.R-project.org/package=topicmodels.etm" class="uri">https://CRAN.R-project.org/package=topicmodels.etm</a></li>
 <li><strong>brown</strong>: Brown word clustering on texts</li>
-<li><strong>sentencepiece</strong>: Byte Pair Encoding and Unigram tokenisation using sentencepiece: <a href="https://CRAN.R-project.org/package=sentencepiece" class="uri">https://CRAN.R-project.org/package=sentencepiece</a></li>
-<li><strong>tokenizers.bpe</strong>: Byte Pair Encoding tokenisation using YouTokenToMe: <a href="https://CRAN.R-project.org/package=tokenizers.bpe" class="uri">https://CRAN.R-project.org/package=tokenizers.bpe</a></li>
-<li><strong>text.alignment</strong>: Find text similarities using Smith-Waterman: <a href="https://CRAN.R-project.org/package=text.alignment" class="uri">https://CRAN.R-project.org/package=text.alignment</a></li>
+<li><strong>sentencepiece</strong>: Byte Pair Encoding and Unigram
+tokenisation using sentencepiece: <a href="https://CRAN.R-project.org/package=sentencepiece" class="uri">https://CRAN.R-project.org/package=sentencepiece</a></li>
+<li><strong>tokenizers.bpe</strong>: Byte Pair Encoding tokenisation
+using YouTokenToMe: <a href="https://CRAN.R-project.org/package=tokenizers.bpe" class="uri">https://CRAN.R-project.org/package=tokenizers.bpe</a></li>
+<li><strong>text.alignment</strong>: Find text similarities using
+Smith-Waterman: <a href="https://CRAN.R-project.org/package=text.alignment" class="uri">https://CRAN.R-project.org/package=text.alignment</a></li>
 <li><strong>textplot</strong>: Visualise complex relations in texts: <a href="https://CRAN.R-project.org/package=textplot" class="uri">https://CRAN.R-project.org/package=textplot</a></li>
-<li><strong>udpipe</strong>: Tokenization, Parts of Speech Tagging, Lemmatization, Dependency Parsing, Keyword detection and NLP processing: <a href="https://CRAN.R-project.org/package=udpipe" class="uri">https://CRAN.R-project.org/package=udpipe</a></li>
+<li><strong>udpipe</strong>: Tokenization, Parts of Speech Tagging,
+Lemmatization, Dependency Parsing, Keyword detection and NLP processing:
+<a href="https://CRAN.R-project.org/package=udpipe" class="uri">https://CRAN.R-project.org/package=udpipe</a></li>
 </ul>
 </div>
 
