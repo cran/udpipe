@@ -1,435 +1,257 @@
 <!DOCTYPE html>
-
 <html>
-
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-<meta charset="utf-8" />
-<meta name="generator" content="pandoc" />
-<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+<title>General</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-
-<meta name="author" content="Jan Wijffels" />
-
-<meta name="date" content="2025-11-27" />
-
-<title>UDPipe Natural Language Processing - Model Building</title>
-
-<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
-// be compatible with the behavior of Pandoc < 2.8).
-document.addEventListener('DOMContentLoaded', function(e) {
-  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
-  var i, h, a;
-  for (i = 0; i < hs.length; i++) {
-    h = hs[i];
-    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
-    a = h.attributes;
-    while (a.length > 0) h.removeAttribute(a[0].name);
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
   }
-});
+};
 </script>
 
+<!-- Styles for R syntax highlighter -->
 <style type="text/css">
-code{white-space: pre-wrap;}
-span.smallcaps{font-variant: small-caps;}
-span.underline{text-decoration: underline;}
-div.column{display: inline-block; vertical-align: top; width: 50%;}
-div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-ul.task-list{list-style: none;}
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
 </style>
 
-
-
-<style type="text/css">
-code {
-white-space: pre;
-}
-.sourceCode {
-overflow: visible;
-}
-</style>
-<style type="text/css" data-origin="pandoc">
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-{ counter-reset: source-line 0; }
-pre.numberSource code > span
-{ position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-{ content: counter(source-line);
-position: relative; left: -1em; text-align: right; vertical-align: baseline;
-border: none; display: inline-block;
--webkit-touch-callout: none; -webkit-user-select: none;
--khtml-user-select: none; -moz-user-select: none;
--ms-user-select: none; user-select: none;
-padding: 0 4px; width: 4em;
-color: #aaaaaa;
-}
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
-div.sourceCode
-{ }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
-code span.al { color: #ff0000; font-weight: bold; } 
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
-code span.at { color: #7d9029; } 
-code span.bn { color: #40a070; } 
-code span.bu { color: #008000; } 
-code span.cf { color: #007020; font-weight: bold; } 
-code span.ch { color: #4070a0; } 
-code span.cn { color: #880000; } 
-code span.co { color: #60a0b0; font-style: italic; } 
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
-code span.do { color: #ba2121; font-style: italic; } 
-code span.dt { color: #902000; } 
-code span.dv { color: #40a070; } 
-code span.er { color: #ff0000; font-weight: bold; } 
-code span.ex { } 
-code span.fl { color: #40a070; } 
-code span.fu { color: #06287e; } 
-code span.im { color: #008000; font-weight: bold; } 
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
-code span.kw { color: #007020; font-weight: bold; } 
-code span.op { color: #666666; } 
-code span.ot { color: #007020; } 
-code span.pp { color: #bc7a00; } 
-code span.sc { color: #4070a0; } 
-code span.ss { color: #bb6688; } 
-code span.st { color: #4070a0; } 
-code span.va { color: #19177c; } 
-code span.vs { color: #4070a0; } 
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
-</style>
-<script>
-// apply pandoc div.sourceCode style to pre.sourceCode instead
-(function() {
-  var sheets = document.styleSheets;
-  for (var i = 0; i < sheets.length; i++) {
-    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
-    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    var j = 0;
-    while (j < rules.length) {
-      var rule = rules[j];
-      // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
-        j++;
-        continue;
-      }
-      var style = rule.style.cssText;
-      // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') {
-        j++;
-        continue;
-      }
-      // replace div.sourceCode by a pre.sourceCode rule
-      sheets[i].deleteRule(j);
-      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
-    }
-  }
-})();
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
 </script>
 
 
 
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
 
-<style type="text/css">body {
-background-color: #fff;
-margin: 1em auto;
-max-width: 700px;
-overflow: visible;
-padding-left: 2em;
-padding-right: 2em;
-font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-font-size: 14px;
-line-height: 1.35;
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
 }
-#TOC {
-clear: both;
-margin: 0 0 10px 10px;
-padding: 4px;
-width: 400px;
-border: 1px solid #CCCCCC;
-border-radius: 5px;
-background-color: #f6f6f6;
-font-size: 13px;
-line-height: 1.3;
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
 }
-#TOC .toctitle {
-font-weight: bold;
-font-size: 15px;
-margin-left: 5px;
+
+h1 {
+   font-size:2.2em;
 }
-#TOC ul {
-padding-left: 40px;
-margin-left: -1.5em;
-margin-top: 5px;
-margin-bottom: 5px;
+
+h2 {
+   font-size:1.8em;
 }
-#TOC ul ul {
-margin-left: -2em;
+
+h3 {
+   font-size:1.4em;
 }
-#TOC li {
-line-height: 16px;
+
+h4 {
+   font-size:1.0em;
 }
-table {
-margin: 1em auto;
-border-width: 1px;
-border-color: #DDDDDD;
-border-style: outset;
-border-collapse: collapse;
+
+h5 {
+   font-size:0.9em;
 }
-table th {
-border-width: 2px;
-padding: 5px;
-border-style: inset;
+
+h6 {
+   font-size:0.8em;
 }
-table td {
-border-width: 1px;
-border-style: inset;
-line-height: 18px;
-padding: 5px 5px;
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
 }
-table, table th, table td {
-border-left-style: none;
-border-right-style: none;
-}
-table thead, table tr.even {
-background-color: #f7f7f7;
-}
-p {
-margin: 0.5em 0;
-}
-blockquote {
-background-color: #f6f6f6;
-padding: 0.25em 0.75em;
-}
-hr {
-border-style: solid;
-border: none;
-border-top: 1px solid #777;
-margin: 28px 0;
-}
-dl {
-margin-left: 0;
-}
-dl dd {
-margin-bottom: 13px;
-margin-left: 13px;
-}
-dl dt {
-font-weight: bold;
-}
-ul {
-margin-top: 0;
-}
-ul li {
-list-style: circle outside;
-}
-ul ul {
-margin-bottom: 0;
-}
-pre, code {
-background-color: #f7f7f7;
-border-radius: 3px;
-color: #333;
-white-space: pre-wrap; 
+
+pre, img {
+  max-width: 100%;
 }
 pre {
-border-radius: 3px;
-margin: 5px 0px 10px 0px;
-padding: 10px;
+  overflow-x: auto;
 }
-pre:not([class]) {
-background-color: #f7f7f7;
+pre code {
+   display: block; padding: 0.5em;
 }
+
 code {
-font-family: Consolas, Monaco, 'Courier New', monospace;
-font-size: 85%;
+  font-size: 92%;
+  border: 1px solid #ccc;
 }
-p > code, li > code {
-padding: 2px 0px;
-}
-div.figure {
-text-align: center;
-}
-img {
-background-color: #FFFFFF;
-padding: 2px;
-border: 1px solid #DDDDDD;
-border-radius: 3px;
-border: 1px solid #CCCCCC;
-margin: 0 5px;
-}
-h1 {
-margin-top: 0;
-font-size: 35px;
-line-height: 40px;
-}
-h2 {
-border-bottom: 4px solid #f7f7f7;
-padding-top: 10px;
-padding-bottom: 2px;
-font-size: 145%;
-}
-h3 {
-border-bottom: 2px solid #f7f7f7;
-padding-top: 10px;
-font-size: 120%;
-}
-h4 {
-border-bottom: 1px solid #f7f7f7;
-margin-left: 8px;
-font-size: 105%;
-}
-h5, h6 {
-border-bottom: 1px solid #ccc;
-font-size: 105%;
-}
-a {
-color: #0033dd;
-text-decoration: none;
-}
-a:hover {
-color: #6666ff; }
-a:visited {
-color: #800080; }
-a:visited:hover {
-color: #BB00BB; }
-a[href^="http:"] {
-text-decoration: underline; }
-a[href^="https:"] {
-text-decoration: underline; }
 
-code > span.kw { color: #555; font-weight: bold; } 
-code > span.dt { color: #902000; } 
-code > span.dv { color: #40a070; } 
-code > span.bn { color: #d14; } 
-code > span.fl { color: #d14; } 
-code > span.ch { color: #d14; } 
-code > span.st { color: #d14; } 
-code > span.co { color: #888888; font-style: italic; } 
-code > span.ot { color: #007020; } 
-code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; } 
-code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
 </style>
-
 
 
 
 </head>
 
 <body>
-
-
-
-
-<h1 class="title toc-ignore">UDPipe Natural Language Processing - Model
-Building</h1>
-<h4 class="author">Jan Wijffels</h4>
-<h4 class="date">2025-11-27</h4>
-
-
-<div id="TOC">
-<ul>
-<li><a href="#general" id="toc-general">General</a></li>
-<li><a href="#model-building" id="toc-model-building">Model building</a>
-<ul>
-<li><a href="#basic-example" id="toc-basic-example">Basic
-example</a></li>
-<li><a href="#providing-more-details-on-the-model-annotation-process" id="toc-providing-more-details-on-the-model-annotation-process">Providing
-more details on the model annotation process</a></li>
-</ul></li>
-<li><a href="#settings-for-the-tokenizer" id="toc-settings-for-the-tokenizer">Settings for the tokenizer:</a></li>
-<li><a href="#settings-for-the-tagger" id="toc-settings-for-the-tagger">Settings for the tagger:</a></li>
-<li><a href="#settings-for-the-dependency-parser" id="toc-settings-for-the-dependency-parser">Settings for the dependency
-parser:</a></li>
-<li><a href="#example" id="toc-example">Example</a>
-<ul>
-<li><a href="#example-on-ud-2.6-on-german-gsd" id="toc-example-on-ud-2.6-on-german-gsd">Example on UD 2.6 on German
-GSD</a></li>
-</ul></li>
-<li><a href="#support-in-text-mining" id="toc-support-in-text-mining">Support in text mining</a></li>
-</ul>
-</div>
-
-<div id="general" class="section level2">
 <h2>General</h2>
-<p>This package vignette shows how to build your own text annotation
-models based on UDPipe, allowing you to have full control over how you
-like that the model will execute: Tokenization (1), Parts of Speech
-tagging (2), Lemmatization (3) and Dependency Parsing (4).</p>
-<p>This section is also relevant if you work in a commercial setting
-where you would like to build and use your own models to annotate text.
-Note that some pre-trained models which you can download with
-<code>udpipe_download_model</code> were released under the CC-BY-NC-SA
-license, others were released under the CC-BY-SA license, the latter
-allowing for more liberal use.</p>
-<p>In order to train annotation models, you need to have data in
-<strong>CONLL-U format</strong>, a format which is described at <a href="https://universaldependencies.org/format.html" class="uri">https://universaldependencies.org/format.html</a>. At the
-time of writing this, for more than 60 languages, open treebanks in
-CONLL-U format are made available for download at <a href="https://universaldependencies.org" class="uri">https://universaldependencies.org</a>. Most of these
-treebanks are distributed under the CC-BY-SA license which allows
-commercial use.</p>
-<p>Mark that if you will build your own models, you will probably be
-interested in reading the paper with the details of the techniques used
-by UDPipe: “Tokenizing, POS Tagging, Lemmatizing and Parsing UD 2.0 with
-UDPipe”, available at <a href="https://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf" class="uri">https://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf</a>
-as well as the paper “UDPipe: Trainable Pipeline for Processing CoNLL-U
-Files Performing Tokenization, Morphological Analysis, POS Tagging and
-Parsing”, available at <a href="http://www.lrec-conf.org/proceedings/lrec2016/pdf/873_Paper.pdf" class="uri">http://www.lrec-conf.org/proceedings/lrec2016/pdf/873_Paper.pdf</a>.</p>
-</div>
-<div id="model-building" class="section level2">
+
+<p>This package vignette shows how to build your own text annotation models based on UDPipe, allowing you to have full control over how you like that the model will execute: Tokenization (1), Parts of Speech tagging (2), Lemmatization (3) and Dependency Parsing (4). </p>
+
+<p>This section is also relevant if you work in a commercial setting where you would like to build and use your own models to annotate text. Note that some pre-trained models which you can download with <code>udpipe_download_model</code> were released under the CC-BY-NC-SA license, others were released under the CC-BY-SA license, the latter allowing for more liberal use. </p>
+
+<p>In order to train annotation models, you need to have data in <strong>CONLL-U format</strong>, a format which is described at <a href="https://universaldependencies.org/format.html">https://universaldependencies.org/format.html</a>. At the time of writing this, for more than 60 languages, open treebanks in CONLL-U format are made available for download at <a href="https://universaldependencies.org">https://universaldependencies.org</a>. Most of these treebanks are distributed under the CC-BY-SA license which allows commercial use.</p>
+
+<p>Mark that if you will build your own models, you will probably be interested in reading the paper with the details of the techniques used by UDPipe: &ldquo;Tokenizing, POS Tagging, Lemmatizing and Parsing UD 2.0 with UDPipe&rdquo;, available at <a href="https://ufal.mff.cuni.cz/%7Estraka/papers/2017-conll_udpipe.pdf">https://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf</a> as well as the paper
+&ldquo;UDPipe: Trainable Pipeline for Processing CoNLL-U Files Performing Tokenization, Morphological Analysis, POS Tagging and Parsing&rdquo;, available at <a href="http://www.lrec-conf.org/proceedings/lrec2016/pdf/873_Paper.pdf">http://www.lrec-conf.org/proceedings/lrec2016/pdf/873_Paper.pdf</a>. </p>
+
 <h2>Model building</h2>
-<div id="basic-example" class="section level3">
+
 <h3>Basic example</h3>
-<p>Currently the package allows you to fit a text annotation model by
-using the function <code>udpipe_train</code>. You have to give it a
-character vector of files which are in CONLL-U format (which you might
-have downloaded at <a href="https://universaldependencies.org" class="uri">https://universaldependencies.org</a>).</p>
-<p>Such at file basically looks like this, or has a similar format. You
-can just download these from <a href="https://universaldependencies.org" class="uri">https://universaldependencies.org</a> for the language of
-your choice.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>file_conllu <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="at">package =</span> <span class="st">&quot;udpipe&quot;</span>, <span class="st">&quot;dummydata&quot;</span>, <span class="st">&quot;traindata.conllu&quot;</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>file_conllu</span></code></pre></div>
-<pre><code>[1] &quot;C:/rtools45/tmp/RtmpKo7Nxk/Rinst2fac41992197/udpipe/dummydata/traindata.conllu&quot;</code></pre>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">head</span>(<span class="fu">readLines</span>(file_conllu), <span class="dv">3</span>), <span class="at">sep=</span><span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div>
+
+<p>Currently the package allows you to fit a text annotation model by using the function <code>udpipe_train</code>. You have to give it a character vector of files which are in CONLL-U format (which you might have downloaded at <a href="https://universaldependencies.org">https://universaldependencies.org</a>).</p>
+
+<p>Such at file basically looks like this, or has a similar format. You can just download these from <a href="https://universaldependencies.org">https://universaldependencies.org</a> for the language of your choice.</p>
+
+<pre><code class="r">file_conllu &lt;- system.file(package = &quot;udpipe&quot;, &quot;dummydata&quot;, &quot;traindata.conllu&quot;)
+file_conllu
+</code></pre>
+
+<pre><code>[1] &quot;/tmp/RtmplKv1CI/Rinst24acf0e48d0c2/udpipe/dummydata/traindata.conllu&quot;
+</code></pre>
+
+<pre><code class="r">cat(head(readLines(file_conllu), 3), sep=&quot;\n&quot;)
+</code></pre>
+
 <pre><code># newdoc id = doc1
 # newpar
-# sent_id = 1</code></pre>
-<p>If you have this type of file and you provide it to
-<code>udpipe_train</code>, a model is saved on disk in a binary format
-which can then be used to annotate your text data using
-<code>udpipe_annotate</code> in order to Tokenize, get Parts of Speech
-tags, find Lemma’s or to extract Dependency relationships. Let’s show
-how this training works on the toy CONLL-U file we just showed:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(udpipe)</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">udpipe_train</span>(<span class="at">file =</span> <span class="st">&quot;toymodel.udpipe&quot;</span>, <span class="at">files_conllu_training =</span> file_conllu, </span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                  <span class="at">annotation_tokenizer =</span> <span class="fu">list</span>(<span class="at">dimension =</span> <span class="dv">16</span>, </span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>                                              <span class="at">epochs =</span> <span class="dv">1</span>, </span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>                                              <span class="at">batch_size =</span> <span class="dv">100</span>, </span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>                                              <span class="at">dropout =</span> <span class="fl">0.7</span>),</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>                  <span class="at">annotation_tagger =</span> <span class="fu">list</span>(<span class="at">iterations =</span> <span class="dv">1</span>, </span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>                                           <span class="at">models =</span> <span class="dv">1</span>, </span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>                                           <span class="at">provide_xpostag =</span> <span class="dv">1</span>, </span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>                                           <span class="at">provide_lemma =</span> <span class="dv">0</span>, </span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>                                           <span class="at">provide_feats =</span> <span class="dv">0</span>), </span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>                  <span class="at">annotation_parser =</span> <span class="st">&quot;none&quot;</span>)</span></code></pre></div>
+# sent_id = 1
+</code></pre>
+
+<p>If you have this type of file and you provide it to <code>udpipe_train</code>, a model is saved on disk in a binary format which can then be used to annotate your text data using <code>udpipe_annotate</code> in order to Tokenize, get Parts of Speech tags, find Lemma&#39;s or to extract Dependency relationships.
+Let&#39;s show how this training works on the toy CONLL-U file we just showed:</p>
+
+<pre><code class="r">library(udpipe)
+m &lt;- udpipe_train(file = &quot;toymodel.udpipe&quot;, files_conllu_training = file_conllu, 
+                  annotation_tokenizer = list(dimension = 16, 
+                                              epochs = 1, 
+                                              batch_size = 100, 
+                                              dropout = 0.7),
+                  annotation_tagger = list(iterations = 1, 
+                                           models = 1, 
+                                           provide_xpostag = 1, 
+                                           provide_lemma = 0, 
+                                           provide_feats = 0), 
+                  annotation_parser = &quot;none&quot;)
+</code></pre>
+
 <pre><code>Training tokenizer with the following options: tokenize_url=1, allow_spaces=0, dimension=16
   epochs=1, batch_size=100, segment_size=50, learning_rate=0.0050, learning_rate_final=0.0000
   dropout=0.7000, early_stopping=0
@@ -440,18 +262,26 @@ Tagger model 1 dictionary options: max_form_analyses=0, custom dictionary_file=n
 Tagger model 1 guesser options: suffix_rules=8, prefixes_max=0, prefix_min_count=10, enrich_dictionary=6
 Tagger model 1 options: iterations=1, early_stopping=0, templates=tagger
 Training tagger model 1.
-Iteration 1: done, accuracy 44.44%</code></pre>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>m<span class="sc">$</span>file_model</span></code></pre></div>
-<pre><code>[1] &quot;toymodel.udpipe&quot;</code></pre>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="do">## The model is now trained and saved in file toymodel.udpipe in the current working directory</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="do">## Now we can use the model to annotate some text</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>mymodel <span class="ot">&lt;-</span> <span class="fu">udpipe_load_model</span>(<span class="st">&quot;toymodel.udpipe&quot;</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">udpipe_annotate</span>(</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">object =</span> mymodel, </span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">x =</span> <span class="st">&quot;Dit is een tokenizer met POS tagging, </span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="st">       zonder lemmatisation noch laat deze dependency parsing toe.&quot;</span>, </span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="at">parser =</span> <span class="st">&quot;none&quot;</span>)</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="fu">str</span>(<span class="fu">as.data.frame</span>(x))</span></code></pre></div>
+Iteration 1: done, accuracy 44.44%
+</code></pre>
+
+<pre><code class="r">m$file_model
+</code></pre>
+
+<pre><code>[1] &quot;toymodel.udpipe&quot;
+</code></pre>
+
+<pre><code class="r">## The model is now trained and saved in file toymodel.udpipe in the current working directory
+## Now we can use the model to annotate some text
+mymodel &lt;- udpipe_load_model(&quot;toymodel.udpipe&quot;)
+x &lt;- udpipe_annotate(
+  object = mymodel, 
+  x = &quot;Dit is een tokenizer met POS tagging, 
+       zonder lemmatisation noch laat deze dependency parsing toe.&quot;, 
+  parser = &quot;none&quot;)
+str(as.data.frame(x))
+</code></pre>
+
 <pre><code>&#39;data.frame&#39;:   15 obs. of  14 variables:
  $ doc_id       : chr  &quot;doc1&quot; &quot;doc1&quot; &quot;doc1&quot; &quot;doc1&quot; ...
  $ paragraph_id : int  1 1 1 1 1 1 1 1 1 1 ...
@@ -466,71 +296,66 @@ Iteration 1: done, accuracy 44.44%</code></pre>
  $ head_token_id: chr  NA NA NA NA ...
  $ dep_rel      : chr  NA NA NA NA ...
  $ deps         : chr  NA NA NA NA ...
- $ misc         : chr  NA NA NA NA ...</code></pre>
-<p>In the above example, we trained only a tokenizer and POS tagger,
-excluding lemmatisation and feature tagging and without dependency
-parsing. This was done by setting the <code>annotation_parser</code>
-argument to ‘none’ and setting <code>provide_lemma</code> and
-<code>provide_feats</code> to 0. The other arguments were merely set to
-reduce computation time in this package vignette.</p>
-</div>
-<div id="providing-more-details-on-the-model-annotation-process" class="section level3">
+ $ misc         : chr  NA NA NA NA ...
+</code></pre>
+
+<p>In the above example, we trained only a tokenizer and POS tagger, excluding lemmatisation and feature tagging and without dependency parsing. This was done by setting the <code>annotation_parser</code> argument to &#39;none&#39; and setting <code>provide_lemma</code> and <code>provide_feats</code> to 0. The other arguments were merely set to reduce computation time in this package vignette. </p>
+
 <h3>Providing more details on the model annotation process</h3>
-<p>If you want to create a tagger which is capable of executing
-tokenisation, tagging as well as dependency parsing with the default
-settings of the algorithm, you just proceed as follows.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">udpipe_train</span>(<span class="at">file =</span> <span class="st">&quot;toymodel.udpipe&quot;</span>, <span class="at">files_conllu_training =</span> file_conllu, </span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>                  <span class="at">annotation_tokenizer =</span> <span class="st">&quot;default&quot;</span>,</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>                  <span class="at">annotation_tagger =</span> <span class="st">&quot;default&quot;</span>,</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>                  <span class="at">annotation_parser =</span> <span class="st">&quot;default&quot;</span>)</span></code></pre></div>
-<p>When you want to train the model with specific
-tokenizer/tagger/parser settings, you need to provide these settings as
-a list to the respective arguments <code>annotation_tokenizer</code>,
-<code>annotation_tagger</code> and <code>annotation_parser</code>. The
-possible options for each of these settings are explained in detail
-below and their logic is detailed in the paper “Tokenizing, POS Tagging,
-Lemmatizing and Parsing UD 2.0 with UDPipe”, available at <a href="https://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf" class="uri">https://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf</a>.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="do">## Tokenizer training parameters</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>params<span class="sc">$</span>tokenizer <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">dimension =</span> <span class="dv">24</span>, </span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>                         <span class="at">epochs =</span> <span class="dv">1</span>, <span class="co">#epochs = 100, </span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>                         <span class="at">initialization_range =</span> <span class="fl">0.1</span>, </span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>                         <span class="at">batch_size =</span> <span class="dv">100</span>, <span class="at">learning_rate =</span> <span class="fl">0.005</span>, </span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>                         <span class="at">dropout =</span> <span class="fl">0.1</span>, <span class="at">early_stopping =</span> <span class="dv">1</span>)</span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="do">## Tagger training parameters</span></span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>params<span class="sc">$</span>tagger <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">models =</span> <span class="dv">2</span>, </span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>  <span class="at">templates_1 =</span> <span class="st">&quot;tagger&quot;</span>, </span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>      <span class="at">guesser_suffix_rules_1 =</span> <span class="dv">8</span>, <span class="at">guesser_enrich_dictionary_1 =</span> <span class="dv">6</span>, </span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>      <span class="at">guesser_prefixes_max_1 =</span> <span class="dv">0</span>, </span>
-<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a>      <span class="at">use_lemma_1 =</span> <span class="dv">0</span>, <span class="at">use_xpostag_1 =</span> <span class="dv">1</span>, <span class="at">use_feats_1 =</span> <span class="dv">1</span>, </span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>      <span class="at">provide_lemma_1 =</span> <span class="dv">0</span>, <span class="at">provide_xpostag_1 =</span> <span class="dv">1</span>, </span>
-<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>      <span class="at">provide_feats_1 =</span> <span class="dv">1</span>, <span class="at">prune_features_1 =</span> <span class="dv">0</span>, </span>
-<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  <span class="at">templates_2 =</span> <span class="st">&quot;lemmatizer&quot;</span>, </span>
-<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>      <span class="at">guesser_suffix_rules_2 =</span> <span class="dv">6</span>, <span class="at">guesser_enrich_dictionary_2 =</span> <span class="dv">4</span>, </span>
-<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>      <span class="at">guesser_prefixes_max_2 =</span> <span class="dv">4</span>, </span>
-<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a>      <span class="at">use_lemma_2 =</span> <span class="dv">1</span>, <span class="at">use_xpostag_2 =</span> <span class="dv">0</span>, <span class="at">use_feats_2 =</span> <span class="dv">0</span>, </span>
-<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a>      <span class="at">provide_lemma_2 =</span> <span class="dv">1</span>, <span class="at">provide_xpostag_2 =</span> <span class="dv">0</span>, </span>
-<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a>      <span class="at">provide_feats_2 =</span> <span class="dv">0</span>, <span class="at">prune_features_2 =</span> <span class="dv">0</span>)</span>
-<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a></span>
-<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="do">## Dependency parser training parameters</span></span>
-<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a>params<span class="sc">$</span>parser <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">iterations =</span> <span class="dv">1</span>, </span>
-<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a>  <span class="co">#iterations = 30, </span></span>
-<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>  <span class="at">embedding_upostag =</span> <span class="dv">20</span>, <span class="at">embedding_feats =</span> <span class="dv">20</span>, <span class="at">embedding_xpostag =</span> <span class="dv">0</span>, </span>
-<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a>  <span class="at">embedding_form =</span> <span class="dv">50</span>, </span>
-<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a>  <span class="co">#embedding_form_file = &quot;../ud-2.0-embeddings/nl.skip.forms.50.vectors&quot;, </span></span>
-<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a>  <span class="at">embedding_lemma =</span> <span class="dv">0</span>, <span class="at">embedding_deprel =</span> <span class="dv">20</span>, </span>
-<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a>  <span class="at">learning_rate =</span> <span class="fl">0.01</span>, <span class="at">learning_rate_final =</span> <span class="fl">0.001</span>, <span class="at">l2 =</span> <span class="fl">0.5</span>, <span class="at">hidden_layer =</span> <span class="dv">200</span>, </span>
-<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a>  <span class="at">batch_size =</span> <span class="dv">10</span>, <span class="at">transition_system =</span> <span class="st">&quot;projective&quot;</span>, <span class="at">transition_oracle =</span> <span class="st">&quot;dynamic&quot;</span>, </span>
-<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a>  <span class="at">structured_interval =</span> <span class="dv">10</span>)</span>
-<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a></span>
-<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a><span class="do">## Train the model</span></span>
-<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">udpipe_train</span>(<span class="at">file =</span> <span class="st">&quot;toymodel.udpipe&quot;</span>, </span>
-<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a>                  <span class="at">files_conllu_training =</span> file_conllu, </span>
-<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a>                  <span class="at">annotation_tokenizer =</span> params<span class="sc">$</span>tokenizer,</span>
-<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a>                  <span class="at">annotation_tagger =</span> params<span class="sc">$</span>tagger,</span>
-<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a>                  <span class="at">annotation_parser =</span> params<span class="sc">$</span>parser)</span></code></pre></div>
+
+<p>If you want to create a tagger which is capable of executing tokenisation, tagging as well as dependency parsing with the default settings of the algorithm, you just proceed as follows.</p>
+
+<pre><code class="r">m &lt;- udpipe_train(file = &quot;toymodel.udpipe&quot;, files_conllu_training = file_conllu, 
+                  annotation_tokenizer = &quot;default&quot;,
+                  annotation_tagger = &quot;default&quot;,
+                  annotation_parser = &quot;default&quot;)
+</code></pre>
+
+<p>When you want to train the model with specific tokenizer/tagger/parser settings, you need to provide these settings as a list to the respective arguments <code>annotation_tokenizer</code>, <code>annotation_tagger</code> and <code>annotation_parser</code>. The possible options for each of these settings are explained in detail below and their logic is detailed in the paper &ldquo;Tokenizing, POS Tagging, Lemmatizing and Parsing UD 2.0 with UDPipe&rdquo;, available at <a href="https://ufal.mff.cuni.cz/%7Estraka/papers/2017-conll_udpipe.pdf">https://ufal.mff.cuni.cz/~straka/papers/2017-conll_udpipe.pdf</a>.</p>
+
+<pre><code class="r">params &lt;- list()
+
+## Tokenizer training parameters
+params$tokenizer &lt;- list(dimension = 24, 
+                         epochs = 1, #epochs = 100, 
+                         initialization_range = 0.1, 
+                         batch_size = 100, learning_rate = 0.005, 
+                         dropout = 0.1, early_stopping = 1)
+
+## Tagger training parameters
+params$tagger &lt;- list(models = 2, 
+  templates_1 = &quot;tagger&quot;, 
+      guesser_suffix_rules_1 = 8, guesser_enrich_dictionary_1 = 6, 
+      guesser_prefixes_max_1 = 0, 
+      use_lemma_1 = 0, use_xpostag_1 = 1, use_feats_1 = 1, 
+      provide_lemma_1 = 0, provide_xpostag_1 = 1, 
+      provide_feats_1 = 1, prune_features_1 = 0, 
+  templates_2 = &quot;lemmatizer&quot;, 
+      guesser_suffix_rules_2 = 6, guesser_enrich_dictionary_2 = 4, 
+      guesser_prefixes_max_2 = 4, 
+      use_lemma_2 = 1, use_xpostag_2 = 0, use_feats_2 = 0, 
+      provide_lemma_2 = 1, provide_xpostag_2 = 0, 
+      provide_feats_2 = 0, prune_features_2 = 0)
+
+## Dependency parser training parameters
+params$parser &lt;- list(iterations = 1, 
+  #iterations = 30, 
+  embedding_upostag = 20, embedding_feats = 20, embedding_xpostag = 0, 
+  embedding_form = 50, 
+  #embedding_form_file = &quot;../ud-2.0-embeddings/nl.skip.forms.50.vectors&quot;, 
+  embedding_lemma = 0, embedding_deprel = 20, 
+  learning_rate = 0.01, learning_rate_final = 0.001, l2 = 0.5, hidden_layer = 200, 
+  batch_size = 10, transition_system = &quot;projective&quot;, transition_oracle = &quot;dynamic&quot;, 
+  structured_interval = 10)
+
+## Train the model
+m &lt;- udpipe_train(file = &quot;toymodel.udpipe&quot;, 
+                  files_conllu_training = file_conllu, 
+                  annotation_tokenizer = params$tokenizer,
+                  annotation_tagger = params$tagger,
+                  annotation_parser = params$parser)
+</code></pre>
+
 <pre><code>Training tokenizer with the following options: tokenize_url=1, allow_spaces=0, dimension=24
   epochs=1, batch_size=100, segment_size=50, learning_rate=0.0050, learning_rate_final=0.0000
   dropout=0.1000, early_stopping=1
@@ -598,65 +423,40 @@ Initialized &#39;universal_tag&#39; embedding with 0,9 words and 0.0%,100.0% cov
 Initialized &#39;feats&#39; embedding with 0,17 words and 0.0%,100.0% coverage.
 Initialized &#39;form&#39; embedding with 0,4 words and 0.0%,29.6% coverage.
 Initialized &#39;deprel&#39; embedding with 0,16 words and 0.0%,100.0% coverage.
-Iteration 1: training logprob -2.2803e+02</code></pre>
-<p>As you have seen above in the example, if you want to train the
-dependency parser, you can also provide pre-trained word embeddings
-which you can provide in the <code>embedding_form_file</code> argument.
-Example training data can be found at <a href="https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-2364" class="uri">https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-2364</a>.
-If you also have a holdout file in CONLL-U format which you can provide
-in the <code>files_conllu_holdout</code> argument, the training is
-stopped before model performance decreases on the holdout CONLL-U
-file.</p>
-<p>Mark. Before you embark in starting to train your own models with
-more realistic learning parameters, consider that training can take a
-while.</p>
-</div>
-</div>
-<div id="settings-for-the-tokenizer" class="section level2">
+Iteration 1: training logprob -2.2803e+02
+</code></pre>
+
+<p>As you have seen above in the example, if you want to train the dependency parser, you can also provide pre-trained word embeddings which you can provide in the <code>embedding_form_file</code> argument. Example training data can be found at <a href="https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-2364">https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-2364</a>. If you also have a holdout file in CONLL-U format which you can provide in the <code>files_conllu_holdout</code> argument, the training is stopped before model performance decreases on the holdout CONLL-U file.</p>
+
+<p>Mark. Before you embark in starting to train your own models with more realistic learning parameters, consider that training can take a while. </p>
+
 <h2>Settings for the tokenizer:</h2>
+
 <p>The tokenizer recognizes the following options:</p>
+
 <ul>
-<li><code>tokenize_url</code> (default 1): tokenize URLs and emails
-using a manually implemented recognizer</li>
-<li><code>allow_spaces</code> (default 1 if any token contains a space,
-0 otherwise): allow tokens to contain spaces</li>
-<li><code>dimension</code> (default 24): dimension of character
-embeddings and of the per-character bidirectional GRU. Note that
-inference time is quadratic in this parameter. Supported values are only
-16, 24 and 64, with 64 needed only for languages with complicated
-tokenization like Japanese, Chinese or Vietnamese.</li>
-<li><code>epochs</code> (default 100): the number of epochs to train the
-tokenizer for</li>
-<li><code>batch_size</code> (default 50): batch size used during
-tokenizer training</li>
-<li><code>learning_rate</code> (default 0.005): the learning rate used
-during tokenizer training</li>
-<li><code>dropout</code> (default 0.1): dropout used during tokenizer
-training</li>
-<li><code>early_stopping</code> (default 1 if heldout is given, 0
-otherwise): perform early stopping, choosing training iteration
-maximizing sentences F1 score plus tokens F1 score on heldout data</li>
+<li><code>tokenize_url</code> (default 1): tokenize URLs and emails using a manually implemented recognizer</li>
+<li><code>allow_spaces</code> (default 1 if any token contains a space, 0 otherwise): allow tokens to contain spaces</li>
+<li><code>dimension</code> (default 24): dimension of character embeddings and of the per-character bidirectional GRU. Note that inference time is quadratic in this parameter. Supported values are only 16, 24 and 64, with 64 needed only for languages with complicated tokenization like Japanese, Chinese or Vietnamese.</li>
+<li><code>epochs</code> (default 100): the number of epochs to train the tokenizer for</li>
+<li><code>batch_size</code> (default 50): batch size used during tokenizer training</li>
+<li><code>learning_rate</code> (default 0.005): the learning rate used during tokenizer training</li>
+<li><code>dropout</code> (default 0.1): dropout used during tokenizer training</li>
+<li><code>early_stopping</code> (default 1 if heldout is given, 0 otherwise): perform early stopping, choosing training iteration maximizing sentences F1 score plus tokens F1 score on heldout data</li>
 </ul>
-<p>During random hyperparameter search, <code>batch_size</code> is
-chosen uniformly from {50,100} and <code>learning_rate</code>
-logarithmically from &lt;0.0005, 0.01).</p>
-<p>The tokenizer is trained using the SpaceAfter=No features in the
-CoNLL-U files. If the feature is not present, a detokenizer can be used
-to guess the SpaceAfter=No features according to a supplied plain text
-(which typically does not overlap with the texts in the CoNLL-U
-files).</p>
-<p>In order to use the detokenizer, use the
-<code>detokenizer=file:filename_with_plaintext</code> option. In UD 1.2
-models, the optimal performance is achieved with very small plain texts
-– only 500kB.</p>
-<p>In order to show the settings which were used by the UDPipe community
-when building the models made available when using
-<code>udpipe_download_model</code>, the tokenizer settings used for the
-different treebanks are shown below, so that you can easily use this to
-retrain your model directly on the corresponding UD treebank which you
-can download at <a href="https://universaldependencies.org" class="uri">https://universaldependencies.org</a>.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">data</span>(udpipe_annotation_params)</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">str</span>(udpipe_annotation_params<span class="sc">$</span>tokenizer)</span></code></pre></div>
+
+<p>During random hyperparameter search, <code>batch_size</code> is chosen uniformly from {50,100} and <code>learning_rate</code> logarithmically from &lt;0.0005, 0.01). </p>
+
+<p>The tokenizer is trained using the SpaceAfter=No features in the CoNLL-U files. If the feature is not present, a detokenizer can be used to guess the SpaceAfter=No features according to a supplied plain text (which typically does not overlap with the texts in the CoNLL-U files).</p>
+
+<p>In order to use the detokenizer, use the <code>detokenizer=file:filename_with_plaintext</code> option. In UD 1.2 models, the optimal performance is achieved with very small plain texts – only 500kB.</p>
+
+<p>In order to show the settings which were used by the UDPipe community when building the models made available when using <code>udpipe_download_model</code>, the tokenizer settings used for the different treebanks are shown below, so that you can easily use this to retrain your model directly on the corresponding UD treebank which you can download at <a href="https://universaldependencies.org">https://universaldependencies.org</a>.</p>
+
+<pre><code class="r">data(udpipe_annotation_params)
+str(udpipe_annotation_params$tokenizer)
+</code></pre>
+
 <pre><code>&#39;data.frame&#39;:   68 obs. of  9 variables:
  $ language_treebank   : chr  &quot;ar&quot; &quot;be&quot; &quot;bg&quot; &quot;ca&quot; ...
  $ dimension           : num  24 24 64 64 24 64 24 24 64 24 ...
@@ -666,10 +466,14 @@ can download at <a href="https://universaldependencies.org" class="uri">https://
  $ learning_rate       : num  0.002 0.01 0.005 0.002 0.01 0.002 0.005 0.002 0.002 0.01 ...
  $ dropout             : num  0.3 0.2 0.2 0.1 0.2 0.1 0.1 0.1 0.3 0.2 ...
  $ early_stopping      : num  1 1 1 1 1 1 1 1 1 1 ...
- $ detokenize          : chr  NA NA NA NA ...</code></pre>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="do">## Example for training the tokenizer on the Dutch treebank</span></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>hyperparams_nl <span class="ot">&lt;-</span> <span class="fu">subset</span>(udpipe_annotation_params<span class="sc">$</span>tokenizer, language_treebank <span class="sc">==</span> <span class="st">&quot;nl&quot;</span>)</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="fu">as.list</span>(hyperparams_nl)</span></code></pre></div>
+ $ detokenize          : chr  NA NA NA NA ...
+</code></pre>
+
+<pre><code class="r">## Example for training the tokenizer on the Dutch treebank
+hyperparams_nl &lt;- subset(udpipe_annotation_params$tokenizer, language_treebank == &quot;nl&quot;)
+as.list(hyperparams_nl)
+</code></pre>
+
 <pre><code>$language_treebank
 [1] &quot;nl&quot;
 
@@ -695,85 +499,48 @@ $early_stopping
 [1] 1
 
 $detokenize
-[1] NA</code></pre>
-</div>
-<div id="settings-for-the-tagger" class="section level2">
+[1] NA
+</code></pre>
+
 <h2>Settings for the tagger:</h2>
-<p>The tagging is currently performed using MorphoDiTa (<a href="https://ufal.mff.cuni.cz/morphodita" class="uri">https://ufal.mff.cuni.cz/morphodita</a>). The UDPipe tagger
-consists of possibly several MorphoDiTa models, each tagging some of the
-POS tags and/or lemmas.</p>
-<p>By default, only one model is constructed, which generates all
-available tags (UPOS, XPOS, Feats and Lemma). However, we found out
-during the UD 1.2 models training that performance improves if one model
-tags the UPOS, XPOS and Feats tags, while the other is performing
-lemmatization. Therefore, if you utilize two MorphoDiTa models, by
-default the first one generates all tags (except lemmas) and the second
-one performs lemmatization.</p>
-<p>The number of MorphoDiTa models can be specified using the
-models=number parameter. All other parameters may be either generic for
-all models (guesser_suffix_rules=5), or specific for a given model
-(guesser_suffix_rules_2=6), including the from_model option (therefore,
-MorphoDiTa models can be trained separately and then combined together
-into one UDPipe model).</p>
-<p>Every model utilizes UPOS for disambiguation and the first model is
-the one producing the UPOS tags on output.</p>
+
+<p>The tagging is currently performed using MorphoDiTa (<a href="https://ufal.mff.cuni.cz/morphodita">https://ufal.mff.cuni.cz/morphodita</a>). The UDPipe tagger consists of possibly several MorphoDiTa models, each tagging some of the POS tags and/or lemmas.</p>
+
+<p>By default, only one model is constructed, which generates all available tags (UPOS, XPOS, Feats and Lemma). However, we found out during the UD 1.2 models training that performance improves if one model tags the UPOS, XPOS and Feats tags, while the other is performing lemmatization. Therefore, if you utilize two MorphoDiTa models, by default the first one generates all tags (except lemmas) and the second one performs lemmatization.</p>
+
+<p>The number of MorphoDiTa models can be specified using the models=number parameter. All other parameters may be either generic for all models (guesser_suffix_rules=5), or specific for a given model (guesser_suffix_rules_2=6), including the from_model option (therefore, MorphoDiTa models can be trained separately and then combined together into one UDPipe model).</p>
+
+<p>Every model utilizes UPOS for disambiguation and the first model is the one producing the UPOS tags on output.</p>
+
 <p>The tagger recognizes the following options:</p>
+
 <ul>
-<li><code>use_lemma</code> (default for the second model and also if
-there is only one model): use the lemma field internally to perform
-disambiguation; the lemma may be not outputted</li>
-<li><code>provide_lemma</code> (default for the second model and also if
-there is only one model): produce the disambiguated lemma on output</li>
-<li><code>use_xpostag</code> (default for the first model): use the XPOS
-tags internally to perform disambiguation; it may not be outputted</li>
-<li><code>provide_xpostag</code> (default for the first model): produce
-the disambiguated XPOS tag on output</li>
-<li><code>use_feats</code> (default for the first model): use the Feats
-internally to perform disambiguation; it may not be outputted</li>
-<li><code>provide_feats</code> (default for the first model): produce
-the disambiguated Feats field on output</li>
-<li><code>dictionary_max_form_analyses</code> (default 0 - unlimited):
-the maximum number of (most frequent) form analyses from UD training
-data that are to be kept in the morphological dictionary</li>
-<li><code>dictionary_file</code> (default empty): use a given custom
-morphological dictionary, where each line contains 5 tab-separated
-fields FORM, LEMMA, UPOSTAG, XPOSTAG and FEATS. Note that this
-dictionary data is appended to the dictionary created from the UD
-training data, not replacing it.</li>
-<li><code>guesser_suffix_rules</code> (default 8): number of rules
-generated for every suffix</li>
-<li><code>guesser_prefixes_max</code> (default 4 if provide_lemma, 0
-otherwise): maximum number of form-generating prefixes to use in the
-guesser</li>
-<li><code>guesser_prefix_min_count</code> (default 10): minimum number
-of occurrences of form-generating prefix to consider using it in the
-guesser</li>
-<li><code>guesser_enrich_dictionary</code> (default 6 if no
-dictionary_file is passed, 0 otherwise): number of rules generated for
-forms present in training data (assuming that the analyses from the
-training data may not be all)</li>
-<li><code>iterations</code> (default 20): number of training iterations
-to perform</li>
-<li><code>early_stopping</code> (default 1 if heldout is given, 0
-otherwise): perform early stopping, choosing training iteration
-maximizing tagging accuracy on the heldout data</li>
-<li><code>templates</code> (default lemmatizer for second model, tagger
-otherwise): MorphoDiTa feature templates to use, either lemmatizer which
-focuses more on lemmas, or tagger which focuses more on
-UPOS/XPOS/FEATS</li>
+<li><code>use_lemma</code> (default for the second model and also if there is only one model): use the lemma field internally to perform disambiguation; the lemma may be not outputted</li>
+<li><code>provide_lemma</code> (default for the second model and also if there is only one model): produce the disambiguated lemma on output</li>
+<li><code>use_xpostag</code> (default for the first model): use the XPOS tags internally to perform disambiguation; it may not be outputted</li>
+<li><code>provide_xpostag</code> (default for the first model): produce the disambiguated XPOS tag on output</li>
+<li><code>use_feats</code> (default for the first model): use the Feats internally to perform disambiguation; it may not be outputted</li>
+<li><code>provide_feats</code> (default for the first model): produce the disambiguated Feats field on output</li>
+<li><code>dictionary_max_form_analyses</code> (default 0 - unlimited): the maximum number of (most frequent) form analyses from UD training data that are to be kept in the morphological dictionary</li>
+<li><code>dictionary_file</code> (default empty): use a given custom morphological dictionary, where each line contains 5 tab-separated fields FORM, LEMMA, UPOSTAG, XPOSTAG and FEATS. Note that this dictionary data is appended to the dictionary created from the UD training data, not replacing it.</li>
+<li><code>guesser_suffix_rules</code> (default 8): number of rules generated for every suffix</li>
+<li><code>guesser_prefixes_max</code> (default 4 if provide_lemma, 0 otherwise): maximum number of form-generating prefixes to use in the guesser</li>
+<li><code>guesser_prefix_min_count</code> (default 10): minimum number of occurrences of form-generating prefix to consider using it in the guesser</li>
+<li><code>guesser_enrich_dictionary</code> (default 6 if no dictionary_file is passed, 0 otherwise): number of rules generated for forms present in training data (assuming that the analyses from the training data may not be all)</li>
+<li><code>iterations</code> (default 20): number of training iterations to perform</li>
+<li><code>early_stopping</code> (default 1 if heldout is given, 0 otherwise): perform early stopping, choosing training iteration maximizing tagging accuracy on the heldout data</li>
+<li><code>templates</code> (default lemmatizer for second model, tagger otherwise): MorphoDiTa feature templates to use, either lemmatizer which focuses more on lemmas, or tagger which focuses more on UPOS/XPOS/FEATS</li>
 </ul>
-<p>During random hyperparameter search, guesser_suffix_rules is chosen
-uniformly from {5,6,7,8,9,10,11,12} and guesser_enrich_dictionary is
-chosen uniformly from {3,4,5,6,7,8,9,10}.</p>
-<p>In order to show the settings which were used by the UDPipe community
-when building the models made available when using
-<code>udpipe_download_model</code>, the tagger settings used for the
-different treebanks are shown below, so that you can easily use this to
-retrain your model directly on the corresponding UD treebank which you
-can download at <a href="https://universaldependencies.org" class="uri">https://universaldependencies.org</a>.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="do">## Example for training the tagger on the Dutch treebank</span></span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>hyperparams_nl <span class="ot">&lt;-</span> <span class="fu">subset</span>(udpipe_annotation_params<span class="sc">$</span>tagger, language_treebank <span class="sc">==</span> <span class="st">&quot;nl&quot;</span>)</span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="fu">as.list</span>(hyperparams_nl)</span></code></pre></div>
+
+<p>During random hyperparameter search, guesser_suffix_rules is chosen uniformly from {5,6,7,8,9,10,11,12} and guesser_enrich_dictionary is chosen uniformly from {3,4,5,6,7,8,9,10}. </p>
+
+<p>In order to show the settings which were used by the UDPipe community when building the models made available when using <code>udpipe_download_model</code>, the tagger settings used for the different treebanks are shown below, so that you can easily use this to retrain your model directly on the corresponding UD treebank which you can download at <a href="https://universaldependencies.org">https://universaldependencies.org</a>.</p>
+
+<pre><code class="r">## Example for training the tagger on the Dutch treebank
+hyperparams_nl &lt;- subset(udpipe_annotation_params$tagger, language_treebank == &quot;nl&quot;)
+as.list(hyperparams_nl)
+</code></pre>
+
 <pre><code>$language_treebank
 [1] &quot;nl&quot;
 
@@ -850,108 +617,70 @@ $dictionary_max_form_analyses_2
 [1] NA
 
 $dictionary_max_form_analyses_1
-[1] NA</code></pre>
-</div>
-<div id="settings-for-the-dependency-parser" class="section level2">
+[1] NA
+</code></pre>
+
 <h2>Settings for the dependency parser:</h2>
-<p>The parsing is performed using Parsito (<a href="https://ufal.mff.cuni.cz/parsito" class="uri">https://ufal.mff.cuni.cz/parsito</a>), which is a
-transition-based parser using a neural-network classifier.</p>
-<p>The transition-based systems can be configured by the following
-options:</p>
+
+<p>The parsing is performed using Parsito (<a href="https://ufal.mff.cuni.cz/parsito">https://ufal.mff.cuni.cz/parsito</a>), which is a transition-based parser using a neural-network classifier.</p>
+
+<p>The transition-based systems can be configured by the following options:</p>
+
 <ul>
-<li><code>transition_system</code> (default projective): which
-transition system to use for parsing (language dependent, you can choose
-according to language properties or try all and choose the best one)
-<code>projective</code>: projective stack-based arc standard system with
-shift, left_arc and right_arc transitions <code>swap</code>: fully
-non-projective system which extends projective system by adding the swap
-transition <code>link2</code>: partially non-projective system which
-extends projective system by adding left_arc2 and right_arc2
-transitions</li>
-<li><code>transition_oracle</code> (default dynamic/static_lazy_static
-whichever first is applicable): which transition oracle to use for the
-chosen transition_system: <code>transition_system=projective</code>:
-available oracles are static and dynamic (dynamic usually gives better
-results, but training time is slower)
-<code>transition_system=swap</code>: available oracles are static_eager
-and static_lazy (static_lazy almost always gives better results)
-<code>transition_system=link2</code>: only available oracle is
-static</li>
-<li><code>structured_interval</code> (default 8): use search-based
-oracle in addition to the translation_oracle specified. This almost
-always gives better results, but makes training 2-3 times slower. For
-details, see the paper Straka et al. 2015: Parsing Universal Dependency
-Treebanks using Neural Networks and Search-Based Oracle</li>
-<li><code>single_root</code> (default 1): allow only single root when
-parsing, and make sure only the root node has the root deprel (note that
-training data are checked to be in this format)</li>
+<li><code>transition_system</code> (default projective): which transition system to use for parsing (language dependent, you can choose according to language properties or try all and choose the best one)
+    <code>projective</code>: projective stack-based arc standard system with shift, left_arc and right_arc transitions
+    <code>swap</code>: fully non-projective system which extends projective system by adding the swap transition
+    <code>link2</code>: partially non-projective system which extends projective system by adding left_arc2 and right_arc2 transitions</li>
+<li><code>transition_oracle</code> (default dynamic/static_lazy_static whichever first is applicable): which transition oracle to use for the chosen transition_system:
+    <code>transition_system=projective</code>: available oracles are static and dynamic (dynamic usually gives better results, but training time is slower)
+    <code>transition_system=swap</code>: available oracles are static_eager and static_lazy (static_lazy almost always gives better results)
+    <code>transition_system=link2</code>: only available oracle is static</li>
+<li><code>structured_interval</code> (default 8): use search-based oracle in addition to the translation_oracle specified. This almost always gives better results, but makes training 2-3 times slower. For details, see the paper Straka et al. 2015: Parsing Universal Dependency Treebanks using Neural Networks and Search-Based Oracle</li>
+<li><code>single_root</code> (default 1): allow only single root when parsing, and make sure only the root node has the root deprel (note that training data are checked to be in this format)</li>
 </ul>
+
 <p>The Lemmas/UPOS/XPOS/FEATS used by the parser are configured by:</p>
+
 <ul>
-<li><code>use_gold_tags</code> (default 0): if false and a tagger
-exists, the Lemmas/UPOS/XPOS/FEATS for both the training and heldout
-data are generated by the tagger, otherwise they are taken from the gold
-data</li>
+<li><code>use_gold_tags</code> (default 0): if false and a tagger exists, the Lemmas/UPOS/XPOS/FEATS for both the training and heldout data are generated by the tagger, otherwise they are taken from the gold data</li>
 </ul>
+
 <p>The embeddings used by the parser can be specified as follows:</p>
+
 <ul>
-<li><code>embedding_upostag</code> (default 20): the dimension of the
-UPos embedding used in the parser</li>
-<li><code>embedding_feats</code> (default 20): the dimension of the
-Feats embedding used in the parser</li>
-<li><code>embedding_xpostag</code> (default 0): the dimension of the
-XPos embedding used in the parser</li>
-<li><code>embedding_form</code> (default 50): the dimension of the Form
-embedding used in the parser</li>
-<li><code>embedding_lemma</code> (default 0): the dimension of the Lemma
-embedding used in the parser</li>
-<li><code>embedding_deprel</code> (default 20): the dimension of the
-Deprel embedding used in the parser</li>
-<li><code>embedding_form_file</code>: pre-trained word embeddings in
-word2vec textual format</li>
-<li><code>embedding_lemma_file</code>: pre-trained lemma embeddings in
-word2vec textual format</li>
-<li><code>embedding_form_mincount</code> (default 2): for forms not
-present in the pre-trained embeddings, generate random embeddings if the
-form appears at least this number of times in the trainig data (forms
-not present in the pre-trained embeddings and appearing less number of
-times are considered OOV)</li>
-<li><code>embedding_lemma_mincount</code> (default 2): for lemmas not
-present in the pre-trained embeddings, generate random embeddings if the
-lemma appears at least this number of times in the trainig data (lemmas
-not present in the pre-trained embeddings and appearing less number of
-times are considered OOV)</li>
+<li><code>embedding_upostag</code> (default 20): the dimension of the UPos embedding used in the parser</li>
+<li><code>embedding_feats</code> (default 20): the dimension of the Feats embedding used in the parser</li>
+<li><code>embedding_xpostag</code> (default 0): the dimension of the XPos embedding used in the parser</li>
+<li><code>embedding_form</code> (default 50): the dimension of the Form embedding used in the parser</li>
+<li><code>embedding_lemma</code> (default 0): the dimension of the Lemma embedding used in the parser</li>
+<li><code>embedding_deprel</code> (default 20): the dimension of the Deprel embedding used in the parser</li>
+<li><code>embedding_form_file</code>: pre-trained word embeddings in word2vec textual format</li>
+<li><code>embedding_lemma_file</code>: pre-trained lemma embeddings in word2vec textual format</li>
+<li><code>embedding_form_mincount</code> (default 2): for forms not present in the pre-trained embeddings, generate random embeddings if the form appears at least this number of times in the trainig data (forms not present in the pre-trained embeddings and appearing less number of times are considered OOV)</li>
+<li><code>embedding_lemma_mincount</code> (default 2): for lemmas not present in the pre-trained embeddings, generate random embeddings if the lemma appears at least this number of times in the trainig data (lemmas not present in the pre-trained embeddings and appearing less number of times are considered OOV)</li>
 </ul>
+
 <p>The neural-network training options:</p>
+
 <ul>
-<li><code>iterations</code> (default 10): number of training iterations
-to use</li>
-<li><code>hidden_layer</code> (default 200): the size of the hidden
-layer</li>
-<li><code>batch_size</code> (default 10): batch size used during
-neural-network training</li>
-<li><code>learning_rate</code> (default 0.02): the learning rate used
-during neural-network training</li>
-<li><code>learning_rate_final</code> (0.001): the final learning rate
-used during neural-network training</li>
-<li><code>l2</code> (0.5): the L2 regularization used during
-neural-network training</li>
-<li><code>early_stopping</code> (default 1 if heldout is given, 0
-otherwise): perform early stopping, choosing training iteration
-maximizing LAS on heldout data</li>
+<li><code>iterations</code> (default 10): number of training iterations to use</li>
+<li><code>hidden_layer</code> (default 200): the size of the hidden layer</li>
+<li><code>batch_size</code> (default 10): batch size used during neural-network training</li>
+<li><code>learning_rate</code> (default 0.02): the learning rate used during neural-network training</li>
+<li><code>learning_rate_final</code> (0.001): the final learning rate used during neural-network training</li>
+<li><code>l2</code> (0.5): the L2 regularization used during neural-network training</li>
+<li><code>early_stopping</code> (default 1 if heldout is given, 0 otherwise): perform early stopping, choosing training iteration maximizing LAS on heldout data</li>
 </ul>
-<p>During random hyperparameter search, structured_interval is chosen
-uniformly from {0,8,10}, learning_rate is chosen logarithmically from
-&lt;0.005,0.04) and l2 is chosen uniformly from &lt;0.2,0.6).</p>
-<p>In order to show the settings which were used by the UDPipe community
-when building the models made available when using
-<code>udpipe_download_model</code>, the parser settings used for the
-different treebanks are shown below, so that you can easily use this to
-retrain your model directly on the corresponding UD treebank which you
-can download at <a href="https://universaldependencies.org" class="uri">https://universaldependencies.org</a>.</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="do">## Example for training the dependency parser on the Dutch treebank</span></span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>hyperparams_nl <span class="ot">&lt;-</span> <span class="fu">subset</span>(udpipe_annotation_params<span class="sc">$</span>parser, language_treebank <span class="sc">==</span> <span class="st">&quot;nl&quot;</span>)</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="fu">as.list</span>(hyperparams_nl)</span></code></pre></div>
+
+<p>During random hyperparameter search, structured_interval is chosen uniformly from {0,8,10}, learning_rate is chosen logarithmically from &lt;0.005,0.04) and l2 is chosen uniformly from &lt;0.2,0.6). </p>
+
+<p>In order to show the settings which were used by the UDPipe community when building the models made available when using <code>udpipe_download_model</code>, the parser settings used for the different treebanks are shown below, so that you can easily use this to retrain your model directly on the corresponding UD treebank which you can download at <a href="https://universaldependencies.org">https://universaldependencies.org</a>.</p>
+
+<pre><code class="r">## Example for training the dependency parser on the Dutch treebank
+hyperparams_nl &lt;- subset(udpipe_annotation_params$parser, language_treebank == &quot;nl&quot;)
+as.list(hyperparams_nl)
+</code></pre>
+
 <pre><code>$language_treebank
 [1] &quot;nl&quot;
 
@@ -1001,78 +730,79 @@ $transition_oracle
 [1] &quot;dynamic&quot;
 
 $structured_interval
-[1] 10</code></pre>
-</div>
-<div id="example" class="section level2">
+[1] 10
+</code></pre>
+
 <h2>Example</h2>
-<div id="example-on-ud-2.6-on-german-gsd" class="section level3">
+
 <h3>Example on UD 2.6 on German GSD</h3>
-<p>The following code shows a complete training run on the German GSD
-treebank from UD 2.6. The code</p>
-<ol style="list-style-type: decimal">
+
+<p>The following code shows a complete training run on the German GSD treebank from UD 2.6. The code </p>
+
+<ol>
 <li>downloads the Universal Dependencies training data</li>
-<li>builds a word2vec model on top of the training data as this is used
-in the dependency parser</li>
-<li>trains the model using the set of hyperparameters which were used by
-the UDPipe authors and which you can find at <a href="https://github.com/ufal/udpipe/tree/master/training" class="uri">https://github.com/ufal/udpipe/tree/master/training</a> in
-general or at <a href="https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-3131" class="uri">https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-3131</a>
-for UD 2.5</li>
+<li>builds a word2vec model on top of the training data as this is used in the dependency parser</li>
+<li>trains the model using the set of hyperparameters which were used by the UDPipe authors and which you can find at <a href="https://github.com/ufal/udpipe/tree/master/training">https://github.com/ufal/udpipe/tree/master/training</a> in general or at <a href="https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-3131">https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-3131</a> for UD 2.5</li>
 </ol>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">library</span>(utils)</span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="fu">library</span>(udpipe)</span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="fu">library</span>(word2vec)</span>
-<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a></span>
-<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="do">## Work on data from Universal Dependencies - German GSD treebank</span></span>
-<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>settings <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>settings<span class="sc">$</span>ud.train    <span class="ot">&lt;-</span> <span class="st">&quot;https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.6/de_gsd-ud-train.conllu&quot;</span></span>
-<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>settings<span class="sc">$</span>ud.dev      <span class="ot">&lt;-</span> <span class="st">&quot;https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.6/de_gsd-ud-dev.conllu&quot;</span></span>
-<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>settings<span class="sc">$</span>ud.test     <span class="ot">&lt;-</span> <span class="st">&quot;https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.6/de_gsd-ud-test.conllu&quot;</span></span>
-<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a></span>
-<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="do">## Download the conllu files</span></span>
-<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a><span class="fu">download.file</span>(<span class="at">url =</span> settings<span class="sc">$</span>ud.train, <span class="at">destfile =</span> <span class="st">&quot;train.conllu&quot;</span>)</span>
-<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a><span class="fu">download.file</span>(<span class="at">url =</span> settings<span class="sc">$</span>ud.dev,   <span class="at">destfile =</span> <span class="st">&quot;dev.conllu&quot;</span>)</span>
-<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a><span class="fu">download.file</span>(<span class="at">url =</span> settings<span class="sc">$</span>ud.test,  <span class="at">destfile =</span> <span class="st">&quot;test.conllu&quot;</span>)</span>
-<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a></span>
-<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a><span class="do">## Create wordvectors as these are used for training the dependency parser + save the word vectors to disk</span></span>
-<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">udpipe_read_conllu</span>(<span class="st">&quot;train.conllu&quot;</span>)</span>
-<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">paste.data.frame</span>(x, <span class="at">term =</span> <span class="st">&quot;token&quot;</span>, <span class="at">group =</span> <span class="fu">c</span>(<span class="st">&quot;doc_id&quot;</span>, <span class="st">&quot;paragraph_id&quot;</span>, <span class="st">&quot;sentence_id&quot;</span>), <span class="at">collapse =</span> <span class="st">&quot; &quot;</span>)</span>
-<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a>x <span class="ot">&lt;-</span> x<span class="sc">$</span>token</span>
-<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a><span class="fu">writeLines</span>(x, <span class="at">con =</span> <span class="fu">file</span>(<span class="st">&quot;text.txt&quot;</span>, <span class="at">encoding =</span> <span class="st">&quot;UTF-8&quot;</span>, <span class="at">open =</span> <span class="st">&quot;wt&quot;</span>))</span>
-<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a>w2v <span class="ot">&lt;-</span> <span class="fu">word2vec</span>(<span class="st">&quot;text.txt&quot;</span>, <span class="at">type =</span> <span class="st">&quot;skip-gram&quot;</span>, <span class="at">dim =</span> <span class="dv">50</span>, <span class="at">window =</span> <span class="dv">10</span>, <span class="at">min_count =</span> <span class="dv">2</span>, <span class="at">negative =</span> <span class="dv">5</span>, <span class="at">iter =</span> <span class="dv">15</span>, <span class="at">threads =</span> <span class="dv">1</span>)</span>
-<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a><span class="fu">write.word2vec</span>(w2v, <span class="at">file =</span> <span class="st">&quot;wordvectors.vec&quot;</span>, <span class="at">type =</span> <span class="st">&quot;txt&quot;</span>, <span class="at">encoding =</span> <span class="st">&quot;UTF-8&quot;</span>)</span>
-<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a><span class="fu">predict</span>(w2v, <span class="fu">c</span>(<span class="st">&quot;gut&quot;</span>, <span class="st">&quot;freundlich&quot;</span>), <span class="at">type =</span> <span class="st">&quot;nearest&quot;</span>, <span class="at">top =</span> <span class="dv">20</span>)</span>
-<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a></span>
-<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a><span class="do">## Train the model</span></span>
-<span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">Sys.time</span>())</span>
-<span id="cb22-27"><a href="#cb22-27" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">udpipe_train</span>(<span class="at">file =</span> <span class="st">&quot;de_gsd-ud-2.6-20200924.udpipe&quot;</span>, </span>
-<span id="cb22-28"><a href="#cb22-28" tabindex="-1"></a>                  <span class="at">files_conllu_training =</span> <span class="st">&quot;train.conllu&quot;</span>, </span>
-<span id="cb22-29"><a href="#cb22-29" tabindex="-1"></a>                  <span class="at">files_conllu_holdout  =</span> <span class="st">&quot;dev.conllu&quot;</span>,</span>
-<span id="cb22-30"><a href="#cb22-30" tabindex="-1"></a>                  <span class="at">annotation_tokenizer =</span> <span class="fu">list</span>(<span class="at">dimension =</span> <span class="dv">64</span>, <span class="at">epochs =</span> <span class="dv">100</span>, <span class="at">segment_size=</span><span class="dv">200</span>, <span class="at">initialization_range =</span> <span class="fl">0.1</span>, </span>
-<span id="cb22-31"><a href="#cb22-31" tabindex="-1"></a>                                              <span class="at">batch_size =</span> <span class="dv">50</span>, <span class="at">learning_rate =</span> <span class="fl">0.002</span>, <span class="at">learning_rate_final=</span><span class="dv">0</span>, <span class="at">dropout =</span> <span class="fl">0.1</span>, <span class="at">early_stopping =</span> <span class="dv">1</span>),</span>
-<span id="cb22-32"><a href="#cb22-32" tabindex="-1"></a>                  <span class="at">annotation_tagger =</span> <span class="fu">list</span>(<span class="at">models =</span> <span class="dv">2</span>, </span>
-<span id="cb22-33"><a href="#cb22-33" tabindex="-1"></a>                                           <span class="at">templates_1 =</span> <span class="st">&quot;lemmatizer&quot;</span>, <span class="at">guesser_suffix_rules_1 =</span> <span class="dv">8</span>, <span class="at">guesser_enrich_dictionary_1 =</span> <span class="dv">4</span>, <span class="at">guesser_prefixes_max_1 =</span> <span class="dv">4</span>, </span>
-<span id="cb22-34"><a href="#cb22-34" tabindex="-1"></a>                                           <span class="at">use_lemma_1 =</span> <span class="dv">1</span>,<span class="at">provide_lemma_1 =</span> <span class="dv">1</span>, <span class="at">use_xpostag_1 =</span> <span class="dv">0</span>, <span class="at">provide_xpostag_1 =</span> <span class="dv">0</span>, </span>
-<span id="cb22-35"><a href="#cb22-35" tabindex="-1"></a>                                           <span class="at">use_feats_1 =</span> <span class="dv">0</span>, <span class="at">provide_feats_1 =</span> <span class="dv">0</span>, <span class="at">prune_features_1 =</span> <span class="dv">1</span>, </span>
-<span id="cb22-36"><a href="#cb22-36" tabindex="-1"></a>                                           <span class="at">templates_2 =</span> <span class="st">&quot;tagger&quot;</span>, <span class="at">guesser_suffix_rules_2 =</span> <span class="dv">8</span>, <span class="at">guesser_enrich_dictionary_2 =</span> <span class="dv">4</span>, <span class="at">guesser_prefixes_max_2 =</span> <span class="dv">0</span>, </span>
-<span id="cb22-37"><a href="#cb22-37" tabindex="-1"></a>                                           <span class="at">use_lemma_2 =</span> <span class="dv">1</span>, <span class="at">provide_lemma_2 =</span> <span class="dv">0</span>, <span class="at">use_xpostag_2 =</span> <span class="dv">1</span>, <span class="at">provide_xpostag_2 =</span> <span class="dv">1</span>, </span>
-<span id="cb22-38"><a href="#cb22-38" tabindex="-1"></a>                                           <span class="at">use_feats_2 =</span> <span class="dv">1</span>, <span class="at">provide_feats_2 =</span> <span class="dv">1</span>, <span class="at">prune_features_2 =</span> <span class="dv">1</span>),</span>
-<span id="cb22-39"><a href="#cb22-39" tabindex="-1"></a>                  <span class="at">annotation_parser =</span> <span class="fu">list</span>(<span class="at">iterations =</span> <span class="dv">30</span>, <span class="at">embedding_upostag =</span> <span class="dv">20</span>, <span class="at">embedding_feats =</span> <span class="dv">20</span>, <span class="at">embedding_xpostag =</span> <span class="dv">0</span>, </span>
-<span id="cb22-40"><a href="#cb22-40" tabindex="-1"></a>                                           <span class="at">embedding_form =</span> <span class="dv">50</span>, <span class="at">embedding_form_file =</span> <span class="st">&quot;wordvectors.vec&quot;</span>, </span>
-<span id="cb22-41"><a href="#cb22-41" tabindex="-1"></a>                                           <span class="at">embedding_lemma =</span> <span class="dv">0</span>, <span class="at">embedding_deprel =</span> <span class="dv">20</span>, <span class="at">learning_rate =</span> <span class="fl">0.01</span>, </span>
-<span id="cb22-42"><a href="#cb22-42" tabindex="-1"></a>                                           <span class="at">learning_rate_final =</span> <span class="fl">0.001</span>, <span class="at">l2 =</span> <span class="fl">0.5</span>, <span class="at">hidden_layer =</span> <span class="dv">200</span>, </span>
-<span id="cb22-43"><a href="#cb22-43" tabindex="-1"></a>                                           <span class="at">batch_size =</span> <span class="dv">10</span>, <span class="at">transition_system =</span> <span class="st">&quot;projective&quot;</span>, <span class="at">transition_oracle =</span> <span class="st">&quot;dynamic&quot;</span>, </span>
-<span id="cb22-44"><a href="#cb22-44" tabindex="-1"></a>                                           <span class="at">structured_interval =</span> <span class="dv">8</span>))</span>
-<span id="cb22-45"><a href="#cb22-45" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">Sys.time</span>())</span>
-<span id="cb22-46"><a href="#cb22-46" tabindex="-1"></a></span>
-<span id="cb22-47"><a href="#cb22-47" tabindex="-1"></a><span class="do">## Evaluate the accuracy</span></span>
-<span id="cb22-48"><a href="#cb22-48" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">udpipe_load_model</span>(<span class="st">&quot;de_gsd-ud-2.6-20200924.udpipe&quot;</span>)</span>
-<span id="cb22-49"><a href="#cb22-49" tabindex="-1"></a>goodness_of_fit <span class="ot">&lt;-</span> <span class="fu">udpipe_accuracy</span>(m, <span class="st">&quot;test.conllu&quot;</span>, <span class="at">tokenizer =</span> <span class="st">&quot;default&quot;</span>, <span class="at">tagger =</span> <span class="st">&quot;default&quot;</span>, <span class="at">parser =</span> <span class="st">&quot;default&quot;</span>)</span>
-<span id="cb22-50"><a href="#cb22-50" tabindex="-1"></a><span class="fu">cat</span>(goodness_of_fit<span class="sc">$</span>accuracy, <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>) </span>
-<span id="cb22-51"><a href="#cb22-51" tabindex="-1"></a>goodness_of_fit <span class="ot">&lt;-</span> <span class="fu">udpipe_accuracy</span>(m, <span class="st">&quot;test.conllu&quot;</span>, <span class="at">tokenizer =</span> <span class="st">&quot;none&quot;</span>, <span class="at">tagger =</span> <span class="st">&quot;default&quot;</span>, <span class="at">parser =</span> <span class="st">&quot;default&quot;</span>)</span>
-<span id="cb22-52"><a href="#cb22-52" tabindex="-1"></a><span class="fu">cat</span>(goodness_of_fit<span class="sc">$</span>accuracy, <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>) </span>
-<span id="cb22-53"><a href="#cb22-53" tabindex="-1"></a>goodness_of_fit <span class="ot">&lt;-</span> <span class="fu">udpipe_accuracy</span>(m, <span class="st">&quot;test.conllu&quot;</span>, <span class="at">tokenizer =</span> <span class="st">&quot;none&quot;</span>, <span class="at">tagger =</span> <span class="st">&quot;none&quot;</span>, <span class="at">parser =</span> <span class="st">&quot;default&quot;</span>)</span>
-<span id="cb22-54"><a href="#cb22-54" tabindex="-1"></a><span class="fu">cat</span>(goodness_of_fit<span class="sc">$</span>accuracy, <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>) </span></code></pre></div>
+
+<pre><code class="r">library(utils)
+library(udpipe)
+library(word2vec)
+
+## Work on data from Universal Dependencies - German GSD treebank
+settings &lt;- list()
+settings$ud.train    &lt;- &quot;https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.6/de_gsd-ud-train.conllu&quot;
+settings$ud.dev      &lt;- &quot;https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.6/de_gsd-ud-dev.conllu&quot;
+settings$ud.test     &lt;- &quot;https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.6/de_gsd-ud-test.conllu&quot;
+
+## Download the conllu files
+download.file(url = settings$ud.train, destfile = &quot;train.conllu&quot;)
+download.file(url = settings$ud.dev,   destfile = &quot;dev.conllu&quot;)
+download.file(url = settings$ud.test,  destfile = &quot;test.conllu&quot;)
+
+## Create wordvectors as these are used for training the dependency parser + save the word vectors to disk
+x &lt;- udpipe_read_conllu(&quot;train.conllu&quot;)
+x &lt;- paste.data.frame(x, term = &quot;token&quot;, group = c(&quot;doc_id&quot;, &quot;paragraph_id&quot;, &quot;sentence_id&quot;), collapse = &quot; &quot;)
+x &lt;- x$token
+writeLines(x, con = file(&quot;text.txt&quot;, encoding = &quot;UTF-8&quot;, open = &quot;wt&quot;))
+w2v &lt;- word2vec(&quot;text.txt&quot;, type = &quot;skip-gram&quot;, dim = 50, window = 10, min_count = 2, negative = 5, iter = 15, threads = 1)
+write.word2vec(w2v, file = &quot;wordvectors.vec&quot;, type = &quot;txt&quot;, encoding = &quot;UTF-8&quot;)
+predict(w2v, c(&quot;gut&quot;, &quot;freundlich&quot;), type = &quot;nearest&quot;, top = 20)
+
+## Train the model
+print(Sys.time())
+m &lt;- udpipe_train(file = &quot;de_gsd-ud-2.6-20200924.udpipe&quot;, 
+                  files_conllu_training = &quot;train.conllu&quot;, 
+                  files_conllu_holdout  = &quot;dev.conllu&quot;,
+                  annotation_tokenizer = list(dimension = 64, epochs = 100, segment_size=200, initialization_range = 0.1, 
+                                              batch_size = 50, learning_rate = 0.002, learning_rate_final=0, dropout = 0.1, early_stopping = 1),
+                  annotation_tagger = list(models = 2, 
+                                           templates_1 = &quot;lemmatizer&quot;, guesser_suffix_rules_1 = 8, guesser_enrich_dictionary_1 = 4, guesser_prefixes_max_1 = 4, 
+                                           use_lemma_1 = 1,provide_lemma_1 = 1, use_xpostag_1 = 0, provide_xpostag_1 = 0, 
+                                           use_feats_1 = 0, provide_feats_1 = 0, prune_features_1 = 1, 
+                                           templates_2 = &quot;tagger&quot;, guesser_suffix_rules_2 = 8, guesser_enrich_dictionary_2 = 4, guesser_prefixes_max_2 = 0, 
+                                           use_lemma_2 = 1, provide_lemma_2 = 0, use_xpostag_2 = 1, provide_xpostag_2 = 1, 
+                                           use_feats_2 = 1, provide_feats_2 = 1, prune_features_2 = 1),
+                  annotation_parser = list(iterations = 30, embedding_upostag = 20, embedding_feats = 20, embedding_xpostag = 0, 
+                                           embedding_form = 50, embedding_form_file = &quot;wordvectors.vec&quot;, 
+                                           embedding_lemma = 0, embedding_deprel = 20, learning_rate = 0.01, 
+                                           learning_rate_final = 0.001, l2 = 0.5, hidden_layer = 200, 
+                                           batch_size = 10, transition_system = &quot;projective&quot;, transition_oracle = &quot;dynamic&quot;, 
+                                           structured_interval = 8))
+print(Sys.time())
+
+## Evaluate the accuracy
+m &lt;- udpipe_load_model(&quot;de_gsd-ud-2.6-20200924.udpipe&quot;)
+goodness_of_fit &lt;- udpipe_accuracy(m, &quot;test.conllu&quot;, tokenizer = &quot;default&quot;, tagger = &quot;default&quot;, parser = &quot;default&quot;)
+cat(goodness_of_fit$accuracy, sep = &quot;\n&quot;) 
+goodness_of_fit &lt;- udpipe_accuracy(m, &quot;test.conllu&quot;, tokenizer = &quot;none&quot;, tagger = &quot;default&quot;, parser = &quot;default&quot;)
+cat(goodness_of_fit$accuracy, sep = &quot;\n&quot;) 
+goodness_of_fit &lt;- udpipe_accuracy(m, &quot;test.conllu&quot;, tokenizer = &quot;none&quot;, tagger = &quot;none&quot;, parser = &quot;default&quot;)
+cat(goodness_of_fit$accuracy, sep = &quot;\n&quot;) 
+</code></pre>
+
 <p>This will give you something similar to this:</p>
+
 <pre><code>&gt; print(Sys.time())
 [1] &quot;2020-09-24 22:42:30 CEST&quot;
 &gt; m &lt;- udpipe_train(file = &quot;de_gsd-ud-2.6-20200924.udpipe&quot;, 
@@ -1279,33 +1009,18 @@ Tagging from gold tokenization - forms: 16498, upostag: 92.14%, xpostag: 79.80%,
 Parsing from gold tokenization with computed tags - forms: 16498, UAS: 79.88%, LAS: 74.22%
 &gt; goodness_of_fit &lt;- udpipe_accuracy(m, &quot;test.conllu&quot;, tokenizer = &quot;none&quot;, tagger = &quot;none&quot;, parser = &quot;default&quot;)
 &gt; cat(goodness_of_fit$accuracy, sep = &quot;\n&quot;) 
-Parsing from gold tokenization with gold tags - forms: 16498, UAS: 84.24%, LAS: 79.77%</code></pre>
-<p>Which gives accuracy statistics similar to the officially released
-UDPipe models for this treebank. Note that model training takes a while
-depending on the size of the treebank and your hyperparameter settings.
-This example was run on a Windows i5 CPU laptop with 1.7Ghz, so no GPU
-needed. Good luck!</p>
-</div>
-</div>
-<div id="support-in-text-mining" class="section level2">
+Parsing from gold tokenization with gold tags - forms: 16498, UAS: 84.24%, LAS: 79.77%
+</code></pre>
+
+<p>Which gives accuracy statistics similar to the officially released UDPipe models for this treebank.
+Note that model training takes a while depending on the size of the treebank and your hyperparameter settings. This example was run on a Windows i5 CPU laptop with 1.7Ghz, so no GPU needed. 
+Good luck!</p>
+
 <h2>Support in text mining</h2>
-<p>Need support in text mining. Contact BNOSAC: <a href="http://www.bnosac.be" class="uri">http://www.bnosac.be</a></p>
-</div>
 
-
-
-<!-- code folding -->
-
-
-<!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
-  (function () {
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-    document.getElementsByTagName("head")[0].appendChild(script);
-  })();
-</script>
+<p>Need support in text mining. 
+Contact BNOSAC: <a href="http://www.bnosac.be">http://www.bnosac.be</a></p>
 
 </body>
+
 </html>
